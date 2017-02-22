@@ -6,7 +6,7 @@
 #include <map>
 
 using namespace std;
-
+//this is to manage media!
 class MediaManager {
 	map<string,SDL_Texture *> images;
 	//map<strin,SDL_MUSIC *> sounds;

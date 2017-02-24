@@ -6,24 +6,39 @@
 #include <map>
 
 using namespace std;
-//this is to manage media!
+
+//media manager (needs work)
 class MediaManager {
 	map<string,SDL_Texture *> images;
 	//map<strin,SDL_MUSIC *> sounds;
 	public:
-	SDL_Texture *load(string imagePath{
-		
+	SDL_Texture *load(SDL_Renderer *ren, string imagePath){
+		if(images.find(imagePath.c_str())!=images.end()){
+			SDL_Surface *bmp = SDL_LoadBMP(imagePath.c_str());
+			if(bmp!=NULL){
+				SDL_SetColorKey(bmp, SDL_TRUE, SDL_MapRGB(bmp->format, 0, 255, 0));
+				images[imagePath]=SDL_CreateTextureFromSurface(ren,bmp);
+				
+			}
+			SDL_FreeSurface(bmp);
+		}
+		return images[imagePath];
 	}
+
 };
 
 class AnimationFrame {
-	SDL_Texture *frame;
-	int time, w, h; // ms
+	SDL_Texture *frame; 
+	int time; // ms
+	int w,h;//width & heigt of texture
 	public:
+	//Constructor to be used with Media Manager
 	AnimationFrame(SDL_Texture *newFrame, int newTime = 100) {
 		frame = newFrame;
+		SDL_QueryTexture(newFrame,NULL,NULL, &w,&h);//get W & H
 		time = newTime;
 	}
+	//Constructor to be used for Manual Media
 	AnimationFrame(SDL_Renderer *ren, const char *imagePath, int newTime = 100){
 		SDL_Surface *bmp = SDL_LoadBMP(imagePath);
 		if (bmp == NULL){
@@ -41,16 +56,18 @@ class AnimationFrame {
 		}
 		time = newTime;
 	}	
-	void show(SDL_Renderer *ren, int x=0, int y=0){
+	void show(SDL_Renderer *ren, int x=0, int y=0,int srcX=0, int srcY=0,int srcW=0, int srcH=0){
 		SDL_Rect src, dest;
+		//Destination is offset on screen placement
 		dest.x=x;
 		dest.y=y;
-		dest.h=h;
-		dest.w=w;
-		src.x=0;
-		src.y=0;
-		src.w=w;
-		src.h=h;
+		srcH ==0?  dest.h=h :dest.h=srcH;
+		srcW==0?dest.w=w :dest.w=srcW;
+		//source is within texture
+		src.x=srcX;
+		src.y=srcY;
+		src.w=srcW;
+		src.h=srcH;
 		SDL_RenderCopy(ren, frame, &src, &dest);
 	}	
 	int getTime() {
@@ -73,7 +90,7 @@ class Animation {
 		frames.push_back(c);
 		totalTime += c->getTime();
 	}
-	virtual void show(SDL_Renderer *ren, int time){
+	virtual void show(SDL_Renderer *ren, int time,int x=0,int y=0,int srcX=0,int srcY=0,int srcW=0,int srcH=0){
 		int aTime = time % totalTime;
 		int tTime = 0;
 		unsigned int i;
@@ -81,7 +98,8 @@ class Animation {
 			tTime += frames[i]->getTime();
 			if (aTime <= tTime)break;
 		}
-		frames[i]->show(ren);
+		//renderer , posX, posY, offset on texture, width on texture
+		frames[i]->show(ren,x,y,srcX,srcY,srcW,srcH);
 	}	
 	virtual void destroy() {
 		for (unsigned int i = 0; i < frames.size(); i++)
@@ -89,29 +107,44 @@ class Animation {
 	}
 };
 
-class Sprite : public Animation {
-	float x, dx, ax, y, dy, ay;
+class Sprite:public Animation{
+	float x,dx,ax,offX;
+	float y,dy,ay,offY;
 	public:
-	void set(float newX=0.0, float newY=0.0, float newDx=0.0, float newDy=0.0, float newAx=0.0, float newAy=0.0){
-		x = newX; dx = newDx; ax = newAx;
-		y = newY; dy = newDy; ay = newAy;
+	void setPos(float newX, float newY){
+		x=newX;
+		y=newY;
 	}
-	void setVelocity(float newDy, float newDx){
-		dx = newDx;
-		dy = newDy;
+	void setVelocity(float newdX, float newdY){
+		dx=newdX;
+		dy=newdY;
 	}
-	Sprite():Animation(float newX=0.0, float newY=0.0, float newDx=0.0, float newDy=0.0, float newAx=0.0, float newAy=0.0){
-		set(newX, newY, newDx, newDy, newAx, newAy);
+	void setOffSet(float newX, float newY){
+		offX=newX;
+		offY=newY;
 	}
-	void addFrames(SDL_Renderer *ren, const char *imagePath, int count, int timePerFrame = 100) {
-		for (int i = 1; i <=count; i++){
-			stringstream ss;
-			ss << imagePath << i << ".bmp";
-			addFrame(new AnimationFrame(ren, ss.str().c_str(), timePerFrame));
-		}
+	Sprite(){
+		x=0;
+		y=0;
+		dx=0;
+		dy=0;
+		ax=0;
+		ay=0;
+		offX=0;
+		offY=0;
 	}
-	void show(SDL_Renderer *ren, int time) {
-		Animation::show(ren, time, (int)x, (int)y);
+	Sprite(float x, float y, float dx, float dy, float ax, float ay, float offx, float offy){
+		this->x=x;
+		this->y=y;
+		this->dx=dx;
+		this->dy=dy;
+		this->ax=ax;
+		this->ay=ay;
+		this->offX=offx;
+		this->offY=offy;
+	}
+	virtual void show(SDL_Renderer *ren, int time){
+		Animation::show(ren,time,x,y,offX,offY);
 	}	
 	//Jump physics
 	void update(const float &dt) {
@@ -119,7 +152,7 @@ class Sprite : public Animation {
 		y +=dy*dt;
 		dx += ax*dt;
 		dy += ay*dt;
-	}	
+	}
 };
 
 class Game{
@@ -183,15 +216,17 @@ class Game{
 };
 
 class myGame:public Game {
-	Animation a;
+	MediaManager texHandle;
+	Animation shoot;
 	Sprite us;
 	vector<Sprite> npcs;
 	public:
 	void init(const char *gameName = "My Game", int maxW=640, int maxH=480, int startX=100, int startY=100) {
 		Game::init(gameName);
-		a.addFrame(new AnimationFrame(ren, "hello.bmp"));
-		a.addFrame(new AnimationFrame(ren, "hello2.bmp", 500));
-		us.addFrames(ren, "Planet", 8);
+		shoot.addFrame(new AnimationFrame(ren,"CharacterSprite.bmp",200));
+		//shoot.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),50));
+		//a.addFrame(new AnimationFrame(ren, "CharacterSprite.bmp"));
+		//us.addFrames(ren, "Planet", 8);
 		/*world.set(0.0, 0.0, 10.0, 10.0, 0.0, 10.0);
 		for (int i = 0; i < 100; i++){
 			Sprite s;
@@ -201,13 +236,15 @@ class myGame:public Game {
 		}*/
 	}
 	void show(){
-		a.show(ren, ticks);
+		shoot.show(ren,ticks,75,75,155,254,24,24);
+		
+		//a.show(ren, ticks,0,0,160,160,32,32);
 		/*for (unsigned int i = 0; i < npcs.size(); i++){
 			npcs[i].show(ren, ticks);
 			npcs[i].update(dt);
 		}*/
-		us.show(ren, ticks);
-		us.update(dt);
+		//us.show(ren, ticks);
+		//us.update(dt);
 		/*SDL_SetRenderDrawColor(ren, 0, 0, 255, 128);
 		SDL_Rect rect;
 		rect.x = 20;
@@ -219,13 +256,13 @@ class myGame:public Game {
 	}
 	void handleEvent(SDL_Event &event){
 		if(event.type == SDL_KEYDOWN){
-				if(event.key.keysym.sym == SDLK_SPACE)
-					world.setVelocity(10.0, -10.0);
+				if(event.key.keysym.sym == SDLK_SPACE){
 		}
-				
 	}
+				
+}
 	void done(){
-		a.destroy();
+		//a.destroy();
 		us.destroy();
 		Game::done();
 	}	

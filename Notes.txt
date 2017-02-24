@@ -1,0 +1,9 @@
+Shawn:
+	Let me know when you are finished with whatever code you wanted to work through & merge.
+	I figure we could use this file to Take any notes too
+	
+To-Do:
+	-Put timing functions in place & on screen
+	-set up a background (tile out sprites eventually but maybe just a single image for now)
+	-add Character class
+	-add weapon class

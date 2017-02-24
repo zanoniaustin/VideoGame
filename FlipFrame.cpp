@@ -31,6 +31,8 @@ class AnimationFrame {
 	SDL_Texture *frame; 
 	int time; // ms
 	int w,h;//width & heigt of texture
+	int srcX,srcY; //x position y position
+	int srcW, srcH; //internal texture rectangle
 	public:
 	//Constructor to be used with Media Manager
 	AnimationFrame(SDL_Texture *newFrame, int newTime = 100) {
@@ -39,7 +41,7 @@ class AnimationFrame {
 		time = newTime;
 	}
 	//Constructor to be used for Manual Media
-	AnimationFrame(SDL_Renderer *ren, const char *imagePath, int newTime = 100){
+	AnimationFrame(SDL_Renderer *ren, const char *imagePath, int newTime = 100,int srcx=0,int srcy=0,int srcW=24,int srcH=24){
 		SDL_Surface *bmp = SDL_LoadBMP(imagePath);
 		if (bmp == NULL){
 			cout << "SDL_LoadBMP Error: " << SDL_GetError() << endl;
@@ -54,9 +56,13 @@ class AnimationFrame {
 			cout << "SDL_CreateTextureFromSurface Error: " << SDL_GetError() << endl;
 			SDL_Quit();
 		}
+		srcX=srcx;
+		srcY=srcy;
+		this->srcW=srcW;
+		this->srcH=srcH;
 		time = newTime;
 	}	
-	void show(SDL_Renderer *ren, int x=0, int y=0,int srcX=0, int srcY=0,int srcW=0, int srcH=0){
+	virtual void show(SDL_Renderer *ren, int x=0, int y=0){
 		SDL_Rect src, dest;
 		//Destination is offset on screen placement
 		dest.x=x;
@@ -90,7 +96,7 @@ class Animation {
 		frames.push_back(c);
 		totalTime += c->getTime();
 	}
-	virtual void show(SDL_Renderer *ren, int time,int x=0,int y=0,int srcX=0,int srcY=0,int srcW=0,int srcH=0){
+	virtual void show(SDL_Renderer *ren, int time,int x=0,int y=0){
 		int aTime = time % totalTime;
 		int tTime = 0;
 		unsigned int i;
@@ -99,7 +105,7 @@ class Animation {
 			if (aTime <= tTime)break;
 		}
 		//renderer , posX, posY, offset on texture, width on texture
-		frames[i]->show(ren,x,y,srcX,srcY,srcW,srcH);
+		frames[i]->show(ren,x,y);
 	}	
 	virtual void destroy() {
 		for (unsigned int i = 0; i < frames.size(); i++)
@@ -108,8 +114,8 @@ class Animation {
 };
 
 class Sprite:public Animation{
-	float x,dx,ax,offX;
-	float y,dy,ay,offY;
+	float x,dx,ax;
+	float y,dy,ay;
 	public:
 	void setPos(float newX, float newY){
 		x=newX;
@@ -119,10 +125,6 @@ class Sprite:public Animation{
 		dx=newdX;
 		dy=newdY;
 	}
-	void setOffSet(float newX, float newY){
-		offX=newX;
-		offY=newY;
-	}
 	Sprite(){
 		x=0;
 		y=0;
@@ -130,8 +132,6 @@ class Sprite:public Animation{
 		dy=0;
 		ax=0;
 		ay=0;
-		offX=0;
-		offY=0;
 	}
 	Sprite(float x, float y, float dx, float dy, float ax, float ay, float offx, float offy){
 		this->x=x;
@@ -140,11 +140,9 @@ class Sprite:public Animation{
 		this->dy=dy;
 		this->ax=ax;
 		this->ay=ay;
-		this->offX=offx;
-		this->offY=offy;
 	}
-	virtual void show(SDL_Renderer *ren, int time){
-		Animation::show(ren,time,x,y,offX,offY);
+	virtual void show(SDL_Renderer *ren, int time,int x=0,int y=0){
+		Animation::show(ren,time,x,y);
 	}	
 	//Jump physics
 	void update(const float &dt) {
@@ -217,42 +215,18 @@ class Game{
 
 class myGame:public Game {
 	MediaManager texHandle;
-	Animation shoot;
-	Sprite us;
-	vector<Sprite> npcs;
+	Sprite shoot;
 	public:
 	void init(const char *gameName = "My Game", int maxW=640, int maxH=480, int startX=100, int startY=100) {
 		Game::init(gameName);
-		shoot.addFrame(new AnimationFrame(ren,"CharacterSprite.bmp",200));
+		//BUILD SPRITE WITH (ren,time,internal X, internal y, width, height)
+		shoot.addFrame(new AnimationFrame(ren,"CharacterSprite.bmp",200,156,252,24,24));
 		//shoot.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),50));
 		//a.addFrame(new AnimationFrame(ren, "CharacterSprite.bmp"));
-		//us.addFrames(ren, "Planet", 8);
-		/*world.set(0.0, 0.0, 10.0, 10.0, 0.0, 10.0);
-		for (int i = 0; i < 100; i++){
-			Sprite s;
-			s.addFrames(ren, "planet", 8);
-			s.set(rand() %maxW, rand() %maxH, rand() % 20.0 -10.0, rand() % 20.0 - 10.0, 0, 10.0);
-			npcs.push_back(s);
-		}*/
 	}
 	void show(){
-		shoot.show(ren,ticks,75,75,155,254,24,24);
-		
-		//a.show(ren, ticks,0,0,160,160,32,32);
-		/*for (unsigned int i = 0; i < npcs.size(); i++){
-			npcs[i].show(ren, ticks);
-			npcs[i].update(dt);
-		}*/
-		//us.show(ren, ticks);
-		//us.update(dt);
-		/*SDL_SetRenderDrawColor(ren, 0, 0, 255, 128);
-		SDL_Rect rect;
-		rect.x = 20;
-		rect.y = 20;
-		rect.w = 100;
-		rect.h = 100;0
-		SDL_RenderFillRect(ren, &rect);
-		SDL_SetRenderDrawColor(ren, 0, 0, 0, 128);*/
+		//show ren,time,x,y
+		shoot.show(ren,ticks,75,75);
 	}
 	void handleEvent(SDL_Event &event){
 		if(event.type == SDL_KEYDOWN){
@@ -262,8 +236,6 @@ class myGame:public Game {
 				
 }
 	void done(){
-		//a.destroy();
-		us.destroy();
 		Game::done();
 	}	
 };

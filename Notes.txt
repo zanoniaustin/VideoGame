@@ -1,10 +1,8 @@
 Shawn:
-	Let me know when you are finished with whatever code you wanted to work through & merge.
-	I figure we could use this file to Take any notes too
+	
 	
 Austin:
-	So I have been taking a look at trying to get a timer up on the screen and getting the text to the screen is going to be the hard 	part so I am thinking of just having like a image that will represent out trigger for when the guy is moving.
-	Like the image only comes on the screen when the guy is moving. I can explain a bit more on Monday.
+	
 	
 To-Do:
 	-Put timing functions in place & on screen

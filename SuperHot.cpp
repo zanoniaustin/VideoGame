@@ -83,7 +83,6 @@ class Animation {
 			tTime += frames[i]->getTime();
 			if (aTime <= tTime)break;
 		}
-		//renderer , posX, posY, offset on texture, width on texture
 		frames[i]->show(ren,x,y);
 	}	
 	virtual void destroy() {
@@ -202,12 +201,17 @@ class Game{
 class myGame:public Game {
 	MediaManager texHandle; //use me to construct animationFrames
 	Sprite shoot; //double barreled shoot animation
+	Animation bg; //bg doesnt move & needs to be placed X,Y
 	bool trigger; //time trigger
 	
 	public:
 	void init(const char *gameName = "My Game", int maxW=640, int maxH=480, int startX=100, int startY=100) {
-		Game::init(gameName);
+		Game::init(gameName,64*8,64*8); //changed the size to fit tiles (8*8 right now)
 		trigger = false;
+		loadShoot();//loads dude and shooting animation in function to save init space
+		loadBackground(); 
+	}
+	void loadShoot(){
 		SDL_Rect frameRect; //used to create sprite frames (x,y,w,h)
 		setRect(frameRect,158,252,30,24);
 		shoot.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,300)); //media manager handle
@@ -218,17 +222,29 @@ class myGame:public Game {
 		setRect(frameRect,245,256,30,24);
 		shoot.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
 	}
+	
+	void loadBackground(){
+		SDL_Rect frameRect;
+		setRect(frameRect,208,413,64,64);
+		bg.addFrame(new AnimationFrame(texHandle.load(ren,"SpriteTiles.bmp"),frameRect,400000));
+		
+	}
+	
 	void show(){
+		for(int i=0;i<8;i++){
+			for(int j=0;j<8;j++){
+				bg.show(ren,ticks,i*64,j*64); //render 8*8 tiles that are 64 pixels wide, side by side
+				
+				
+			}
+		}
 		shoot.show(ren,ticks);
 		shoot.update();
 		SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
 		SDL_Rect rect;
-		rect.x = 0;
-		rect.y = 0;
-		rect.w = 100;
-		rect.h = 100;
+		setRect(rect,0,0,100,80);//utilized my setRect function
 		if(trigger) SDL_RenderFillRect(ren, &rect);
-		SDL_RenderPresent(ren);
+		SDL_RenderPresent(ren); 
 		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
 	}
 	void handleEvent(SDL_Event &event){

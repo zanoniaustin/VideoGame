@@ -2,7 +2,8 @@ Shawn:
 	
 	
 Austin:
-	
+	So for the sprite tiles I was thinking of having tiles1 or tiles2 as the flooring and then maybe one of the stone
+	or wood as the walls. If you got any questions let me know.
 	
 To-Do:
 	-Put timing functions in place & on screen

@@ -34,56 +34,23 @@ class AnimationFrame {
 	SDL_Texture *frame; 
 	int time; // ms
 	int w,h;//width & heigt of texture
-	int srcX,srcY; //x position y position
-	int srcW, srcH; //internal texture rectangle
+	SDL_Rect frameRect;
 	public:
 	//Constructor to be used with Media Manager
-	AnimationFrame(SDL_Texture *newFrame, int newTime = 100,int srcx=0,int srcy=0,int srcW=24,int srcH=24) {
+	AnimationFrame(SDL_Texture *newFrame,SDL_Rect spriteRect, int newTime=100){
 		if(newFrame!=NULL)
-			frame = newFrame;
-		SDL_QueryTexture(newFrame,NULL,NULL, &w,&h);//get W & H
-		srcX=srcx;
-		srcY=srcy;
-		this->srcW=srcW;
-		this->srcH=srcH;
+			frame=newFrame;
+		frameRect = spriteRect;
 		time = newTime;
 	}
-	//Constructor to be used for Manual Media
-	AnimationFrame(SDL_Renderer *ren, const char *imagePath, int newTime = 100,int srcx=0,int srcy=0,int srcW=24,int srcH=24){
-		SDL_Surface *bmp = SDL_LoadBMP(imagePath);
-		if (bmp == NULL){
-			cout << "SDL_LoadBMP Error: " << SDL_GetError() << endl;
-			SDL_Quit();
-		}
-		SDL_SetColorKey(bmp, SDL_TRUE, SDL_MapRGB(bmp->format, 0, 255, 0));
-		w = bmp->w;
-		h = bmp->h;
-		frame = SDL_CreateTextureFromSurface(ren, bmp);
-		SDL_FreeSurface(bmp);
-		if (frame == NULL){
-			cout << "SDL_CreateTextureFromSurface Error: " << SDL_GetError() << endl;
-			SDL_Quit();
-		}
-		srcX=srcx;
-		srcY=srcy;
-		this->srcW=srcW;
-		this->srcH=srcH;
-		time = newTime;
-	}	
-
+	
+	//shows frame at location X,Y
 	virtual void show(SDL_Renderer *ren, int x=0, int y=0){
-		SDL_Rect src, dest;
-		//Destination is offset on screen placement
-		dest.x=x;
-		dest.y=y;
-		srcH ==0?  dest.h=h :dest.h=srcH;
-		srcW==0?dest.w=w :dest.w=srcW;
-		//source is within texture
-		src.x=srcX;
-		src.y=srcY;
-		src.w=srcW;
-		src.h=srcH;
-		SDL_RenderCopy(ren, frame, &src, &dest);
+		SDL_Rect  dest; //Destination is offset on screen placement
+		dest.x=x; dest.y=y;
+		dest.h=frameRect.h; dest.w=frameRect.w;
+		//ren, frame, sprite(rect), output(rect)
+		SDL_RenderCopy(ren, frame, &frameRect, &dest);
 	}	
 	int getTime() {
 		return time;
@@ -232,18 +199,22 @@ class Game{
 };
 
 class myGame:public Game {
-	MediaManager texHandle;
-	Sprite shoot;
-	bool trigger;
-	int x, y;
+	MediaManager texHandle; //use me to construct animationFrames
+	Sprite shoot; //double barreled shoot animation
+	bool trigger; //time trigger
+	
 	public:
 	void init(const char *gameName = "My Game", int maxW=640, int maxH=480, int startX=100, int startY=100) {
 		Game::init(gameName);
-		//BUILD SPRITE WITH (ren,time,internal X, internal y, width, height)
-		//use texHandle to save FPS
-		shoot.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),300,158,252,30,24));
-		shoot.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),50,216,255,30,24));
-		shoot.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),50,245,256,30,24));
+		SDL_Rect frameRect; //used to create sprite frames (x,y,w,h)
+		setRect(frameRect,158,252,30,24);
+		shoot.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,300)); //media manager handle
+		
+		setRect(frameRect,216,255,30,24);
+		shoot.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
+		
+		setRect(frameRect,245,256,30,24);
+		shoot.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
 	}
 	void show(){
 		shoot.show(ren,ticks);
@@ -272,6 +243,13 @@ class myGame:public Game {
 					shoot.dx = 0;
 				break;
 		}
+	}
+	void setRect(SDL_Rect &rect,int x,int y, int w, int h){
+		rect.x=x;
+		rect.y=y;
+		rect.w=w;
+		rect.h=h;
+		
 	}
 	void done(){
 		Game::done();

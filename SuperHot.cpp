@@ -161,15 +161,7 @@ class Game{
 			cout << "SDL_CreateRenderer Error: " << SDL_GetError() << endl;
 			SDL_Quit();
 		}
-SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
-		SDL_Rect rect;
-		rect.x = 0;
-		rect.y = 0;
-		rect.w = 100;
-		rect.h = 100;
-		if(trigger) SDL_RenderFillRect(ren, &rect);
-		SDL_RenderPresent(ren);
-		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);	}
+	}
 	virtual void done(){
 		SDL_DestroyRenderer(ren);
 		SDL_DestroyWindow(win);

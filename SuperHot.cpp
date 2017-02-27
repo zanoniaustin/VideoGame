@@ -161,7 +161,15 @@ class Game{
 			cout << "SDL_CreateRenderer Error: " << SDL_GetError() << endl;
 			SDL_Quit();
 		}
-	}
+SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
+		SDL_Rect rect;
+		rect.x = 0;
+		rect.y = 0;
+		rect.w = 100;
+		rect.h = 100;
+		if(trigger) SDL_RenderFillRect(ren, &rect);
+		SDL_RenderPresent(ren);
+		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);	}
 	virtual void done(){
 		SDL_DestroyRenderer(ren);
 		SDL_DestroyWindow(win);
@@ -170,6 +178,7 @@ class Game{
 	void run() {
 		int start = SDL_GetTicks();
 		int oldTicks = start;
+
 		finished = false;
 		while(!finished) {
 			SDL_Event event;
@@ -206,6 +215,7 @@ class myGame:public Game {
 	public:
 	void init(const char *gameName = "My Game", int maxW=640, int maxH=480, int startX=100, int startY=100) {
 		Game::init(gameName);
+		trigger = false;
 		SDL_Rect frameRect; //used to create sprite frames (x,y,w,h)
 		setRect(frameRect,158,252,30,24);
 		shoot.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,300)); //media manager handle
@@ -219,28 +229,42 @@ class myGame:public Game {
 	void show(){
 		shoot.show(ren,ticks);
 		shoot.update();
+		SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
+		SDL_Rect rect;
+		rect.x = 0;
+		rect.y = 0;
+		rect.w = 100;
+		rect.h = 100;
+		if(trigger) SDL_RenderFillRect(ren, &rect);
+		SDL_RenderPresent(ren);
+		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
 	}
 	void handleEvent(SDL_Event &event){
 		switch(event.type){
 			case SDL_KEYDOWN:
-				if(event.key.keysym.sym == SDLK_w)
+				if(event.key.keysym.sym == SDLK_w){
 					shoot.dy = -5;
-				if(event.key.keysym.sym == SDLK_a)
+					trigger = true;
+				}
+				if(event.key.keysym.sym == SDLK_a){
 					shoot.dx = -5;
-				if(event.key.keysym.sym == SDLK_s)
+					trigger = true;
+				}
+				if(event.key.keysym.sym == SDLK_s){
 					shoot.dy = 5;
-				if(event.key.keysym.sym == SDLK_d)
+					trigger = true;
+				}
+				if(event.key.keysym.sym == SDLK_d){
 					shoot.dx = 5;
+					trigger = true;
+				}
 				break;
 			case SDL_KEYUP:
-				if(event.key.keysym.sym == SDLK_w)
-					shoot.dy = 0;				
-				if(event.key.keysym.sym == SDLK_a)
-					shoot.dx = 0;			
-				if(event.key.keysym.sym == SDLK_s)
-					shoot.dy = 0;				
-				if(event.key.keysym.sym == SDLK_d)
-					shoot.dx = 0;
+				trigger = false;
+				if(event.key.keysym.sym == SDLK_w) shoot.dy = 0;				
+				else if(event.key.keysym.sym == SDLK_a)	shoot.dx = 0;		
+				else if(event.key.keysym.sym == SDLK_s) shoot.dy = 0;			
+				else if(event.key.keysym.sym == SDLK_d)	shoot.dx = 0;
 				break;
 		}
 	}

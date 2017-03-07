@@ -7,8 +7,41 @@
 
 using namespace std;
 
-//media manager (needs work)
-//seems to be working
+//game screen size in px
+const int SCREEN_WIDTH =1280;
+const int SCREEN_HEIGHT = 720;
+
+//Terrain constants
+const int MAPSIZE= 50;//50*64=3200X3200PX actual map size
+const int TILE_HEIGHT =64;
+const int TILE_WIDTH = 64;
+
+//types of tiles taht exist
+enum TileType {FLOOR1,WOOD1,WOODBORDER,WOOD2,WOOD3,FLOOR2};
+
+
+bool isCollided(SDL_Rect r1, SDL_Rect r2){
+	//set bounds
+	int left1 = r1.x;
+	int left2 = r2.x;
+	int right1 = r1.x+r1.w;
+	int right2 = r2.x+r2.w;
+	int top1 = r1.y;
+	int top2 = r2.y;
+	int bot1 = r1.y+r1.h;
+	int bot2 = r2.y+r2.h;
+	
+	//test if r1 is outside r2 (return false if it is on any axis)
+	if(bot1<=top2)return false;
+	if(top1>=bot2)return false;
+	if(right1<=left2)return false; 
+	if(left1>=right2)return false;
+	//or else they are collided
+	return true;
+	
+}
+
+//media manager
 class MediaManager {
 	map<string,SDL_Texture *> images;
 	//map<strin,SDL_MUSIC *> sounds;
@@ -29,6 +62,76 @@ class MediaManager {
 
 };
 
+//given so no time is needed.
+class Tile{
+	SDL_Texture *frame; //what it is
+	SDL_Rect frameRect; //where it is
+	public:
+	Tile(SDL_Texture *newTile,SDL_Rect tileRect){
+		if(newTile!=NULL)frame=newTile;
+		frameRect=tileRect;
+	}
+	SDL_Rect getRect(){ //used to check collision with camera
+		return frameRect;
+	}
+	
+	//SOMETHING WRONG HERE
+	virtual void show(SDL_Renderer *ren,SDL_Rect &camera,int x=0,int y=0){
+		SDL_Rect destRect;
+		destRect=frameRect;
+		destRect.x=x;//set up x and y for screen
+		destRect.y=y;
+		//if it is within the camera we want to show it. but it isnt quite working.
+		if(isCollided(camera,destRect)){
+			destRect.x-=camera.x;//if they are collided with camera, render them according to screen
+			destRect.y-=camera.y;//this was were that scrolling offset was wrong
+			SDL_RenderCopy(ren,frame,&frameRect,&destRect);
+		}
+	}
+	
+	
+	void destroy() {
+		SDL_DestroyTexture(frame);
+	}
+		
+};
+
+
+class BackGround{
+	map<int,Tile *> tiles; //texture for each tile in a neat little map
+	int grid[MAPSIZE][MAPSIZE]; //actually the map (storing tiletype in a 2d array)
+	
+	public:
+	//used to load the tile type to the map (needed so a map can be built with these)
+	void addtile(int type,Tile *t){
+		if(tiles.count(type)==0){
+			cout << "adding tile: "<< type<<endl;
+			tiles[type]=t;
+		}
+	}
+	//this is where the actual game map is put together
+	void buildMap(){
+		for(int x=0;x<MAPSIZE;x++){
+			for(int y=0;y<MAPSIZE;y++){
+				//if(x%2==0)
+				grid[x][y]=x%6; //for now I want all floors
+				//else grid[x][y]=FLOOR2;
+			}
+		}
+	}
+	//check where the camera is and only render tiles within the frame of the camera :D
+	void show(SDL_Renderer *ren,SDL_Rect &camera){
+		for(int x=0;x<MAPSIZE;x++){
+			for(int y=0;y<MAPSIZE;y++){
+					tiles[grid[x][y]]->show(ren,camera,(x*TILE_WIDTH),(y*TILE_HEIGHT));
+			}
+		}
+	}	
+
+	
+	
+};
+
 
 class AnimationFrame {
 	SDL_Texture *frame; 
@@ -45,9 +148,9 @@ class AnimationFrame {
 	}
 	
 	//shows frame at location X,Y
-	virtual void show(SDL_Renderer *ren, int x=0, int y=0){
+	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int x=0, int y=0){
 		SDL_Rect  dest; //Destination is offset on screen placement
-		dest.x=x; dest.y=y;
+		dest.x=x-camera.x; dest.y=y-camera.y;
 		dest.h=frameRect.h; dest.w=frameRect.w;
 		//ren, frame, sprite(rect), output(rect)
 		SDL_RenderCopy(ren, frame, &frameRect, &dest);
@@ -75,7 +178,7 @@ class Animation {
 		totalTime += c->getTime();
 	}
 
-	virtual void show(SDL_Renderer *ren, int time,int x=0,int y=0){
+	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int time,int x=0,int y=0){
 		int aTime = time % totalTime;
 		int tTime = 0;
 		unsigned int i;
@@ -83,7 +186,7 @@ class Animation {
 			tTime += frames[i]->getTime();
 			if (aTime <= tTime)break;
 		}
-		frames[i]->show(ren,x,y);
+		frames[i]->show(ren,camera,x,y);
 	}	
 	virtual void destroy() {
 		for (unsigned int i = 0; i < frames.size(); i++)
@@ -91,8 +194,7 @@ class Animation {
 	}
 };
 
-
-
+ 
 class Sprite:public Animation{
 	public:
 	float x,dx,ax;
@@ -128,14 +230,15 @@ class Sprite:public Animation{
 		this->ax=ax;
 		this->ay=ay;
 	}
-	virtual void show(SDL_Renderer *ren, int time){
-		Animation::show(ren,time,x,y);
+	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int time){
+		Animation::show(ren,camera,time,x,y);
 	}	
 	void update(){
 		x += dx;
 		y += dy;
 	}
 };
+
 
 class Game{
 	protected:
@@ -145,7 +248,7 @@ class Game{
 	int ticks;
 	float dt;
 	public:
-	virtual void init(const char *gameName, int maxW = 640, int maxH = 480, int startX = 640, int startY = 480){
+	virtual void init(const char *gameName, int maxW = 640, int maxH = 480, int startX = 100, int startY =100){
 		if (SDL_Init(SDL_INIT_VIDEO) != 0){
 			cout << "SDL_Init Error: " << SDL_GetError() << endl;
 		}
@@ -198,16 +301,22 @@ class Game{
 	virtual void handleEvent(SDL_Event &event) = 0;
 };
 
+
 class myGame:public Game {
 	MediaManager texHandle; //use me to construct animationFrames
+	SDL_Rect camera; 
+	SDL_Rect triggerBox; //made a box
 	Sprite shoot; //double barreled shoot animation
-	Animation bg; //bg doesnt move & needs to be placed X,Y
+	BackGround bg; //bg doesnt move & needs to be placed X,Y
 	bool trigger; //time trigger
 	
 	public:
-	void init(const char *gameName = "My Game", int maxW=640, int maxH=480, int startX=100, int startY=100) {
-		Game::init(gameName,64*8,64*8); //changed the size to fit tiles (8*8 right now)
+	void init(const char *gameName = "My Game", int maxW=640, int maxH=480, int startX=0, int startY=0) {
+		Game::init(gameName,SCREEN_HEIGHT,SCREEN_WIDTH); //changed the size to fit tiles (8*8 right now)
 		trigger = false;
+		setRect(triggerBox,0,0,100,80);//utilized my setRect function
+		setRect(camera,0,0,SCREEN_WIDTH,SCREEN_HEIGHT);
+		
 		loadShoot();//loads dude and shooting animation in function to save init space
 		loadBackground(); 
 	}
@@ -225,26 +334,23 @@ class myGame:public Game {
 	
 	void loadBackground(){
 		SDL_Rect frameRect;
-		setRect(frameRect,208,413,64,64);
-		bg.addFrame(new AnimationFrame(texHandle.load(ren,"SpriteTiles.bmp"),frameRect,400000));
+		for(int i=0;i<6;i++){
+		setRect(frameRect,i*64,0,64,64);//loads all the tiles directly across the spritesheet
+		bg.addtile(i,new Tile(texHandle.load(ren,"Terrain.bmp"),frameRect)); //put them in Map for bg
+		}
+		bg.buildMap();//put the map together
 		
 	}
 	
+	//Show method now passes camera, allows rendering of tiles within only the camera (saves fps and can  center)
 	void show(){
-		for(int i=0;i<8;i++){
-			for(int j=0;j<8;j++){
-				bg.show(ren,ticks,i*64,j*64); //render 8*8 tiles that are 64 pixels wide, side by side
-				
-				
-			}
-		}
-		shoot.show(ren,ticks);
+		setCamera(shoot);
+		bg.show(ren,camera);
+		shoot.show(ren,camera,ticks);
 		shoot.update();
+		
 		SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
-		SDL_Rect rect;
-		setRect(rect,0,0,100,80);//utilized my setRect function
-		if(trigger) SDL_RenderFillRect(ren, &rect);
-		SDL_RenderPresent(ren); 
+		if(trigger) SDL_RenderFillRect(ren, &triggerBox);
 		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
 	}
 	void handleEvent(SDL_Event &event){
@@ -276,18 +382,37 @@ class myGame:public Game {
 				break;
 		}
 	}
+	
+	//pass a rectangle in with dimensions to change its dimensions
 	void setRect(SDL_Rect &rect,int x,int y, int w, int h){
 		rect.x=x;
 		rect.y=y;
 		rect.w=w;
 		rect.h=h;
-		
+	}
+	
+	//position the camera around an object
+	void setCamera(Sprite &obj){
+		this->camera.x=( obj.x +15 ) - camera.w / 2;
+		this->camera.y=(obj.y + 12) - camera.h/2;
+		if(camera.x<0){
+			camera.x=0;
+		}
+		if(camera.y<0){
+			camera.y=0;
+		}
+		if(camera.x>TILE_WIDTH*MAPSIZE-camera.w){
+			camera.x=TILE_WIDTH*MAPSIZE-camera.w;
+		}
+		if(camera.y>TILE_HEIGHT*MAPSIZE-camera.h){
+			camera.y=TILE_HEIGHT*MAPSIZE-camera.h;
+		}
 	}
 	void done(){
+		shoot.destroy();
 		Game::done();
 	}	
 };
-
 
 
 int main(int argc, char *argv[]){

@@ -79,10 +79,12 @@ class Tile{
 	virtual void show(SDL_Renderer *ren,SDL_Rect &camera,int x=0,int y=0){
 		SDL_Rect destRect;
 		destRect=frameRect;
-		destRect.x=x-camera.x;
-		destRect.y=y-camera.y;
+		destRect.x=x;//set up x and y for screen
+		destRect.y=y;
 		//if it is within the camera we want to show it. but it isnt quite working.
 		if(isCollided(camera,destRect)){
+			destRect.x-=camera.x;//if they are collided with camera, render them according to screen
+			destRect.y-=camera.y;//this was were that scrolling offset was wrong
 			SDL_RenderCopy(ren,frame,&frameRect,&destRect);
 		}
 	}
@@ -404,6 +406,7 @@ class myGame:public Game {
 		}
 	}
 	void done(){
+		shoot.destroy();
 		Game::done();
 	}	
 };

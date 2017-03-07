@@ -31,12 +31,12 @@ bool isCollided(SDL_Rect r1, SDL_Rect r2){
 	int bot1 = r1.y+r1.h;
 	int bot2 = r2.y+r2.h;
 	
-	//test bounds within
+	//test if r1 is outside r2 (return false if it is on any axis)
 	if(bot1<=top2)return false;
 	if(top1>=bot2)return false;
 	if(right1<=left2)return false; 
 	if(left1>=right2)return false;
-	//or else they are not collided
+	//or else they are collided
 	return true;
 	
 }
@@ -95,6 +95,8 @@ class Tile{
 	}
 		
 };
+
+
 class BackGround{
 	map<int,Tile *> tiles; //texture for each tile in a neat little map
 	int grid[MAPSIZE][MAPSIZE]; //actually the map (storing tiletype in a 2d array)
@@ -130,6 +132,7 @@ class BackGround{
 	
 };
 
+
 class AnimationFrame {
 	SDL_Texture *frame; 
 	int time; // ms
@@ -159,6 +162,8 @@ class AnimationFrame {
 		SDL_DestroyTexture(frame);
 	}
 };
+
+
 class Animation {
 	protected:
 	vector<AnimationFrame *> frames;
@@ -234,6 +239,7 @@ class Sprite:public Animation{
 	}
 };
 
+
 class Game{
 	protected:
 	SDL_Window *win;
@@ -296,8 +302,6 @@ class Game{
 };
 
 
-
-
 class myGame:public Game {
 	MediaManager texHandle; //use me to construct animationFrames
 	SDL_Rect camera; 
@@ -347,7 +351,6 @@ class myGame:public Game {
 		
 		SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
 		if(trigger) SDL_RenderFillRect(ren, &triggerBox);
-		SDL_RenderPresent(ren); 
 		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
 	}
 	void handleEvent(SDL_Event &event){
@@ -410,7 +413,6 @@ class myGame:public Game {
 		Game::done();
 	}	
 };
-
 
 
 int main(int argc, char *argv[]){

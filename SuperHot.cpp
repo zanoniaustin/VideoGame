@@ -178,15 +178,16 @@ class Animation {
 		totalTime += c->getTime();
 	}
 
-	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int time,int x=0,int y=0){
+	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int time,int frame,int x=0,int y=0){
+		/*
 		int aTime = time % totalTime;
 		int tTime = 0;
 		unsigned int i;
 		for (i = 0; i <frames.size(); i++){
 			tTime += frames[i]->getTime();
 			if (aTime <= tTime)break;
-		}
-		frames[i]->show(ren,camera,x,y);
+		}*/
+		frames[frame]->show(ren,camera,x,y);
 	}	
 	virtual void destroy() {
 		for (unsigned int i = 0; i < frames.size(); i++)
@@ -199,21 +200,6 @@ class Sprite:public Animation{
 	public:
 	float x,dx,ax;
 	float y,dy,ay;
-	void setPos(float newX, float newY){
-		x=newX;
-		y=newY;
-	}
-	void setVelocity(float newdX, float newdY){
-		dx=newdX;
-		dy=newdY;
-	}
-	void setXVel(float newdX){
-		dx = newdX;
-	}
-	void changePos(){
-		x += dx;
-		y += dy;
-	}
 	Sprite(){
 		x=150;
 		y=150;
@@ -230,12 +216,65 @@ class Sprite:public Animation{
 		this->ax=ax;
 		this->ay=ay;
 	}
-	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int time){
-		Animation::show(ren,camera,time,x,y);
-	}	
+	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int time, int x, int y, int frame){
+		Animation::show(ren,camera,time,frame,x,y);
+	}
+		
 	void update(){
 		x += dx;
 		y += dy;
+	}
+};
+
+class Player{
+	MediaManager texHandle;
+	public:
+	Sprite frames;
+	float x,dx;
+	float y,dy;
+	Player(){
+		x=300;
+		y=300;
+		dx=0;
+		dy=0;
+	}
+	Player(float x, float y, float dx, float dy){
+		this->x=x;
+		this->y=y;
+		this->dx=dx;
+		this->dy=dy;
+	}
+	
+	void loadPlayer(SDL_Renderer *ren){
+		SDL_Rect frameRect; //used to create sprite frames (x,y,w,h)
+		setRect(frameRect,158,252,30,24);
+		frames.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,300)); //media manager handle
+		
+		setRect(frameRect,216,255,30,24);
+		frames.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
+		
+		setRect(frameRect,245,256,30,24);
+		frames.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
+	}
+	
+	void show(SDL_Renderer *ren,SDL_Rect &camera, int time,int fire){
+		frames.show(ren,camera,time,x,y,fire);
+	}
+	
+	void setRect(SDL_Rect &rect,int x,int y, int w, int h){
+		rect.x=x;
+		rect.y=y;
+		rect.w=w;
+		rect.h=h;
+	}
+	
+	void update(){
+		x += dx;
+		y += dy;
+	}
+	
+	void destroy(){
+		frames.destroy();
 	}
 };
 
@@ -305,31 +344,25 @@ class Game{
 class myGame:public Game {
 	MediaManager texHandle; //use me to construct animationFrames
 	SDL_Rect camera; 
-	SDL_Rect triggerBox; //made a box
-	Sprite shoot; //double barreled shoot animation
+	SDL_Rect triggerBox;
+	Player player; 
 	BackGround bg; //bg doesnt move & needs to be placed X,Y
-	bool trigger; //time trigger
+	bool trigger; 
+	int fire; 
+	int firing;
+	int mouseX, mouseY;
 	
 	public:
 	void init(const char *gameName = "My Game", int maxW=640, int maxH=480, int startX=0, int startY=0) {
 		Game::init(gameName,SCREEN_HEIGHT,SCREEN_WIDTH); //changed the size to fit tiles (8*8 right now)
 		trigger = false;
-		setRect(triggerBox,0,0,100,80);//utilized my setRect function
+		fire = 0;
+		firing = 1;
+		setRect(triggerBox,0,0,100,80);
 		setRect(camera,0,0,SCREEN_WIDTH,SCREEN_HEIGHT);
 		
-		loadShoot();//loads dude and shooting animation in function to save init space
+		player.loadPlayer(ren);
 		loadBackground(); 
-	}
-	void loadShoot(){
-		SDL_Rect frameRect; //used to create sprite frames (x,y,w,h)
-		setRect(frameRect,158,252,30,24);
-		shoot.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,300)); //media manager handle
-		
-		setRect(frameRect,216,255,30,24);
-		shoot.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
-		
-		setRect(frameRect,245,256,30,24);
-		shoot.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
 	}
 	
 	void loadBackground(){
@@ -344,46 +377,59 @@ class myGame:public Game {
 	
 	//Show method now passes camera, allows rendering of tiles within only the camera (saves fps and can  center)
 	void show(){
-		setCamera(shoot);
+		setCamera(player);
 		bg.show(ren,camera);
-		shoot.show(ren,camera,ticks);
-		shoot.update();
+		player.show(ren,camera,ticks,fire);
+		player.update();
 		
 		SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
 		if(trigger) SDL_RenderFillRect(ren, &triggerBox);
 		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
 	}
+	
 	void handleEvent(SDL_Event &event){
+		fire = 0;
 		switch(event.type){
 			case SDL_KEYDOWN:
 				if(event.key.keysym.sym == SDLK_w){
-					shoot.dy = -5;
+					player.dy = -5;
 					trigger = true;
 				}
 				if(event.key.keysym.sym == SDLK_a){
-					shoot.dx = -5;
+					player.dx = -5;
 					trigger = true;
 				}
 				if(event.key.keysym.sym == SDLK_s){
-					shoot.dy = 5;
+					player.dy = 5;
 					trigger = true;
 				}
 				if(event.key.keysym.sym == SDLK_d){
-					shoot.dx = 5;
+					player.dx = 5;
 					trigger = true;
 				}
 				break;
 			case SDL_KEYUP:
 				trigger = false;
-				if(event.key.keysym.sym == SDLK_w) shoot.dy = 0;				
-				else if(event.key.keysym.sym == SDLK_a)	shoot.dx = 0;		
-				else if(event.key.keysym.sym == SDLK_s) shoot.dy = 0;			
-				else if(event.key.keysym.sym == SDLK_d)	shoot.dx = 0;
+				if(event.key.keysym.sym == SDLK_w) player.dy = 0;				
+				else if(event.key.keysym.sym == SDLK_a)	player.dx = 0;		
+				else if(event.key.keysym.sym == SDLK_s) player.dy = 0;			
+				else if(event.key.keysym.sym == SDLK_d)	player.dx = 0;
+				break;
+			case SDL_MOUSEBUTTONDOWN:
+				if (event.button.button == SDL_BUTTON_LEFT){
+					if (firing == 1){
+						fire = firing;
+						firing += 1;
+					}
+					else if (firing == 2){
+						fire = firing;
+						firing -= 1;
+					}
+				}
 				break;
 		}
 	}
 	
-	//pass a rectangle in with dimensions to change its dimensions
 	void setRect(SDL_Rect &rect,int x,int y, int w, int h){
 		rect.x=x;
 		rect.y=y;
@@ -392,8 +438,8 @@ class myGame:public Game {
 	}
 	
 	//position the camera around an object
-	void setCamera(Sprite &obj){
-		this->camera.x=( obj.x +15 ) - camera.w / 2;
+	void setCamera(Player &obj){
+		this->camera.x=(obj.x + 15) - camera.w/2;
 		this->camera.y=(obj.y + 12) - camera.h/2;
 		if(camera.x<0){
 			camera.x=0;
@@ -409,7 +455,7 @@ class myGame:public Game {
 		}
 	}
 	void done(){
-		shoot.destroy();
+		player.destroy();
 		Game::done();
 	}	
 };

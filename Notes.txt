@@ -2,6 +2,6 @@ To-Do:
 	-Put timing functions in place & on screen
 	-Figure out what assets we will be using
 	-add weapon class
-	-add Character class
+	-add Enemy class
 	-create first map for testing
 	

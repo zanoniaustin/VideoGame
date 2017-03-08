@@ -178,17 +178,18 @@ class Animation {
 		totalTime += c->getTime();
 	}
 
-	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int time,int frame,int x=0,int y=0){
-		/*
+	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int time,int x=0,int y=0){
+		
 		int aTime = time % totalTime;
 		int tTime = 0;
 		unsigned int i;
 		for (i = 0; i <frames.size(); i++){
 			tTime += frames[i]->getTime();
 			if (aTime <= tTime)break;
-		}*/
-		frames[frame]->show(ren,camera,x,y);
-	}	
+		}
+		frames[i]->show(ren,camera,x,y);
+	}
+
 	virtual void destroy() {
 		for (unsigned int i = 0; i < frames.size(); i++)
 			frames[i]->destroy();
@@ -216,22 +217,18 @@ class Sprite:public Animation{
 		this->ax=ax;
 		this->ay=ay;
 	}
-	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int time, int x, int y, int frame){
-		Animation::show(ren,camera,time,frame,x,y);
+	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int time, int x, int y){
+		Animation::show(ren,camera,time,x,y);
 	}
 		
-	void update(){
+	virtual void update(){
 		x += dx;
 		y += dy;
 	}
 };
 
-class Player{
-	MediaManager texHandle;
+class Player:public Sprite{
 	public:
-	Sprite frames;
-	float x,dx;
-	float y,dy;
 	Player(){
 		x=300;
 		y=300;
@@ -245,20 +242,20 @@ class Player{
 		this->dy=dy;
 	}
 	
-	void loadPlayer(SDL_Renderer *ren){
+	void loadPlayer(SDL_Renderer *ren,MediaManager &texHandle){
 		SDL_Rect frameRect; //used to create sprite frames (x,y,w,h)
 		setRect(frameRect,158,252,30,24);
-		frames.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,300)); //media manager handle
+		this->addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,300)); //media manager handle
 		
 		setRect(frameRect,216,255,30,24);
-		frames.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
+		this->addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
 		
 		setRect(frameRect,245,256,30,24);
-		frames.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
+		this->addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
 	}
 	
-	void show(SDL_Renderer *ren,SDL_Rect &camera, int time,int fire){
-		frames.show(ren,camera,time,x,y,fire);
+	void showFrame(SDL_Renderer *ren, SDL_Rect &camera,int time, int frameID){
+		frames[frameID]->show(ren,camera,x,y);
 	}
 	
 	void setRect(SDL_Rect &rect,int x,int y, int w, int h){
@@ -268,13 +265,12 @@ class Player{
 		rect.h=h;
 	}
 	
-	void update(){
-		x += dx;
-		y += dy;
+	virtual void update(){
+		Sprite::update();
 	}
 	
 	void destroy(){
-		frames.destroy();
+		Sprite::destroy();
 	}
 };
 
@@ -342,7 +338,7 @@ class Game{
 
 
 class myGame:public Game {
-	MediaManager texHandle; //use me to construct animationFrames
+	MediaManager texHandle; //use me to construct animationFrames (only one in the entire game)
 	SDL_Rect camera; 
 	SDL_Rect triggerBox;
 	Player player; 
@@ -361,7 +357,7 @@ class myGame:public Game {
 		setRect(triggerBox,0,0,100,80);
 		setRect(camera,0,0,SCREEN_WIDTH,SCREEN_HEIGHT);
 		
-		player.loadPlayer(ren);
+		player.loadPlayer(ren,texHandle);
 		loadBackground(); 
 	}
 	
@@ -379,7 +375,7 @@ class myGame:public Game {
 	void show(){
 		setCamera(player);
 		bg.show(ren,camera);
-		player.show(ren,camera,ticks,fire);
+		player.showFrame(ren,camera,ticks,fire);
 		player.update();
 		
 		SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);

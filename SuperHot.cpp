@@ -307,9 +307,10 @@ class Game{
 	void run() {
 		int start = SDL_GetTicks();
 		int oldTicks = start;
-
+		int numFrames = 0;
 		finished = false;
 		while(!finished) {
+			++numFrames;
 			SDL_Event event;
 			if(SDL_PollEvent(&event)) {
 				if(event.type == SDL_WINDOWEVENT){
@@ -330,7 +331,7 @@ class Game{
 			SDL_RenderPresent(ren);
 		}
 		int end = SDL_GetTicks();
-		cout << "FPS " << (300.0*1000.0/float(end-start)) <<endl;
+		cout << "FPS " << (numFrames/(float(end-start)/1000)) <<endl;
 	}	
 	virtual void show() = 0;
 	virtual void handleEvent(SDL_Event &event) = 0;

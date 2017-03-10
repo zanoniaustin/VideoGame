@@ -178,17 +178,18 @@ class Animation {
 		totalTime += c->getTime();
 	}
 
-	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int time,int frame,int x=0,int y=0){
-		/*
+	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int time,int x=0,int y=0){
+		
 		int aTime = time % totalTime;
 		int tTime = 0;
 		unsigned int i;
 		for (i = 0; i <frames.size(); i++){
 			tTime += frames[i]->getTime();
 			if (aTime <= tTime)break;
-		}*/
-		frames[frame]->show(ren,camera,x,y);
-	}	
+		}
+		frames[i]->show(ren,camera,x,y);
+	}
+
 	virtual void destroy() {
 		for (unsigned int i = 0; i < frames.size(); i++)
 			frames[i]->destroy();
@@ -216,22 +217,21 @@ class Sprite:public Animation{
 		this->ax=ax;
 		this->ay=ay;
 	}
-	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int time, int x, int y, int frame){
-		Animation::show(ren,camera,time,frame,x,y);
+	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int time, int x, int y){
+		Animation::show(ren,camera,time,x,y);
 	}
 		
-	void update(){
+	virtual void update(){
 		x += dx;
 		y += dy;
 	}
 };
 
-class Player{
-	MediaManager texHandle;
+class Player:public Sprite{
 	public:
-	Sprite frames;
-	float x,dx;
-	float y,dy;
+	bool trigger;
+	int frameID;
+	int firing;
 	Player(){
 		x=300;
 		y=300;
@@ -245,20 +245,23 @@ class Player{
 		this->dy=dy;
 	}
 	
-	void loadPlayer(SDL_Renderer *ren){
+	void loadPlayer(SDL_Renderer *ren,MediaManager &texHandle){
+		trigger = false;
+		frameID = 0;
+		firing = 1;
 		SDL_Rect frameRect; //used to create sprite frames (x,y,w,h)
 		setRect(frameRect,158,252,30,24);
-		frames.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,300)); //media manager handle
+		this->addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,300)); //media manager handle
 		
 		setRect(frameRect,216,255,30,24);
-		frames.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
+		this->addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
 		
 		setRect(frameRect,245,256,30,24);
-		frames.addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
+		this->addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
 	}
 	
-	void show(SDL_Renderer *ren,SDL_Rect &camera, int time,int fire){
-		frames.show(ren,camera,time,x,y,fire);
+	void showFrame(SDL_Renderer *ren, SDL_Rect &camera,int time){
+		frames[frameID]->show(ren,camera,x,y);
 	}
 	
 	void setRect(SDL_Rect &rect,int x,int y, int w, int h){
@@ -268,13 +271,53 @@ class Player{
 		rect.h=h;
 	}
 	
-	void update(){
-		x += dx;
-		y += dy;
+	virtual void update(){
+		Sprite::update();
 	}
 	
 	void destroy(){
-		frames.destroy();
+		Sprite::destroy();
+	}
+};
+
+class Enemy:public Sprite{
+	int frameID;
+	public:
+	Enemy(){
+		x=200;
+		y=200;
+		dx=0;
+		dy=0;
+	}
+	Enemy(float x, float y, float dx, float dy){
+		this->x=x;
+		this->y=y;
+		this->dx=dx;
+		this->dy=dy;
+	}
+	void loadEnemy(SDL_Renderer *ren,MediaManager &texHandle){
+		frameID = 0;
+		SDL_Rect frameRect; //used to create sprite frames (x,y,w,h)
+		setRect(frameRect,158,252,30,24);
+		this->addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,300)); //media manager handle
+		/*
+		setRect(frameRect,216,255,30,24);
+		this->addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
+		
+		setRect(frameRect,245,256,30,24);
+		this->addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));*/
+	}
+	void showFrame(SDL_Renderer *ren, SDL_Rect &camera,int time){
+		frames[frameID]->show(ren,camera,x,y);
+	}
+	void setRect(SDL_Rect &rect,int x,int y, int w, int h){
+		rect.x=x;
+		rect.y=y;
+		rect.w=w;
+		rect.h=h;
+	}
+	void destroy(){
+		Sprite::destroy();
 	}
 };
 
@@ -311,9 +354,10 @@ class Game{
 	void run() {
 		int start = SDL_GetTicks();
 		int oldTicks = start;
-
+		int numFrames = 0;
 		finished = false;
 		while(!finished) {
+			++numFrames;
 			SDL_Event event;
 			if(SDL_PollEvent(&event)) {
 				if(event.type == SDL_WINDOWEVENT){
@@ -334,7 +378,7 @@ class Game{
 			SDL_RenderPresent(ren);
 		}
 		int end = SDL_GetTicks();
-		cout << "FPS " << (300.0*1000.0/float(end-start)) <<endl;
+		cout << "FPS " << (numFrames/(float(end-start)/1000)) <<endl;
 	}	
 	virtual void show() = 0;
 	virtual void handleEvent(SDL_Event &event) = 0;
@@ -342,26 +386,22 @@ class Game{
 
 
 class myGame:public Game {
-	MediaManager texHandle; //use me to construct animationFrames
+	MediaManager texHandle; //use me to construct animationFrames (only one in the entire game)
 	SDL_Rect camera; 
 	SDL_Rect triggerBox;
-	Player player; 
+	Player player;
+	Enemy enemy; 
 	BackGround bg; //bg doesnt move & needs to be placed X,Y
-	bool trigger; 
-	int fire; 
-	int firing;
 	int mouseX, mouseY;
 	
 	public:
 	void init(const char *gameName = "My Game", int maxW=640, int maxH=480, int startX=0, int startY=0) {
 		Game::init(gameName,SCREEN_HEIGHT,SCREEN_WIDTH); //changed the size to fit tiles (8*8 right now)
-		trigger = false;
-		fire = 0;
-		firing = 1;
 		setRect(triggerBox,0,0,100,80);
 		setRect(camera,0,0,SCREEN_WIDTH,SCREEN_HEIGHT);
 		
-		player.loadPlayer(ren);
+		player.loadPlayer(ren,texHandle);
+		enemy.loadEnemy(ren,texHandle);
 		loadBackground(); 
 	}
 	
@@ -379,37 +419,38 @@ class myGame:public Game {
 	void show(){
 		setCamera(player);
 		bg.show(ren,camera);
-		player.show(ren,camera,ticks,fire);
+		player.showFrame(ren,camera,ticks);
+		enemy.showFrame(ren, camera, ticks);
 		player.update();
 		
 		SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
-		if(trigger) SDL_RenderFillRect(ren, &triggerBox);
+		if(player.trigger) SDL_RenderFillRect(ren, &triggerBox);
 		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
 	}
 	
 	void handleEvent(SDL_Event &event){
-		fire = 0;
+		player.frameID = 0;
 		switch(event.type){
 			case SDL_KEYDOWN:
 				if(event.key.keysym.sym == SDLK_w){
 					player.dy = -5;
-					trigger = true;
+					player.trigger = true;
 				}
 				if(event.key.keysym.sym == SDLK_a){
 					player.dx = -5;
-					trigger = true;
+					player.trigger = true;
 				}
 				if(event.key.keysym.sym == SDLK_s){
 					player.dy = 5;
-					trigger = true;
+					player.trigger = true;
 				}
 				if(event.key.keysym.sym == SDLK_d){
 					player.dx = 5;
-					trigger = true;
+					player.trigger = true;
 				}
 				break;
 			case SDL_KEYUP:
-				trigger = false;
+				player.trigger = false;
 				if(event.key.keysym.sym == SDLK_w) player.dy = 0;				
 				else if(event.key.keysym.sym == SDLK_a)	player.dx = 0;		
 				else if(event.key.keysym.sym == SDLK_s) player.dy = 0;			
@@ -417,13 +458,13 @@ class myGame:public Game {
 				break;
 			case SDL_MOUSEBUTTONDOWN:
 				if (event.button.button == SDL_BUTTON_LEFT){
-					if (firing == 1){
-						fire = firing;
-						firing += 1;
+					if (player.firing == 1){
+						player.frameID = player.firing;
+						player.firing += 1;
 					}
-					else if (firing == 2){
-						fire = firing;
-						firing -= 1;
+					else if (player.firing == 2){
+						player.frameID = player.firing;
+						player.firing -= 1;
 					}
 				}
 				break;

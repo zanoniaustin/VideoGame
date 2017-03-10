@@ -249,6 +249,7 @@ class Player:public Sprite{
 		trigger = false;
 		frameID = 0;
 		firing = 1;
+
 		SDL_Rect frameRect; //used to create sprite frames (x,y,w,h)
 		setRect(frameRect,158,252,30,24);
 		this->addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,300)); //media manager handle
@@ -259,7 +260,7 @@ class Player:public Sprite{
 		setRect(frameRect,245,256,30,24);
 		this->addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));
 	}
-	
+
 	void showFrame(SDL_Renderer *ren, SDL_Rect &camera,int time){
 		frames[frameID]->show(ren,camera,x,y);
 	}
@@ -318,6 +319,7 @@ class Enemy:public Sprite{
 	}
 	void destroy(){
 		Sprite::destroy();
+
 	}
 };
 

@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 Shawn: the example is from the spritesheet page I found the image. I was thinking just the terrain, and our own character spritesheet
 
+=======
+Austin: I am working on the enemy class I know there is some stuff wrong with it just wanted to get the bare bones of it loaded up.
+	I am gonna be working on it more though.
+>>>>>>> origin/master
 
 To-Do:
 	-Put timing functions in place & on screen

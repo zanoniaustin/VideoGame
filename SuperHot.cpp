@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+//#include <SDL2/SDL_ttf.h>
 #include <string>
 #include <iostream>
 #include <vector>
@@ -272,10 +273,18 @@ class Player:public Sprite{
 	void destroy(){
 		Sprite::destroy();
 	}
+	//sprite can handle his own event
+	void handleMyEvent(SDL_Event &e){
+		
+		
+		
+		
+	}
 };
 
 
 class Game{
+	SDL_Thread *updateThread,*renderThread;
 	protected:
 	SDL_Window *win;
 	SDL_Renderer *ren;
@@ -304,15 +313,52 @@ class Game{
 		SDL_DestroyWindow(win);
 		SDL_Quit();
 	}
-	void run() {
+	static int updateGame(void* self){
+		Game *g=(Game*)self;
+		g->updateGame();
+		return 0;
+	}
+	void updateGame(){
+		int oldTicks = SDL_GetTicks();
+		while(!finished) {
+			ticks = SDL_GetTicks();
+			int dticks=(ticks-oldTicks);
+			float dt=(float)(dticks)/1000.0;
+			update(dt);
+			oldTicks = ticks;
+			SDL_Delay(10);
+
+		}
+	}
+	static int renderGame(void* self){
+		Game *g=(Game*)self;
+		g->renderGame();
+		return 0;
+		
+	}
+	void renderGame(){
 		int start = SDL_GetTicks();
-		int oldTicks = start;
 		int numFrames = 0;
-		finished = false;
+
 		while(!finished) {
 			++numFrames;
+			ticks = SDL_GetTicks();
+			SDL_RenderClear(ren);
+			show(ticks);
+			SDL_RenderPresent(ren);
+			SDL_Delay(10);
+		}
+		int end=SDL_GetTicks();
+		cout << "FPS: "<<(numFrames*1000)/float(end-start)<<endl;
+	}
+	void run() {
+		int result;
+		finished = false;
+		updateThread=SDL_CreateThread(updateGame,"Update",this);
+		renderThread=SDL_CreateThread(renderGame,"Render",this);
+		while(!finished) {
 			SDL_Event event;
-			if(SDL_PollEvent(&event)) {
+			while(SDL_PollEvent(&event)) {
 				if(event.type == SDL_WINDOWEVENT){
 					if(event.window.event == SDL_WINDOWEVENT_CLOSE)
 						finished = true;
@@ -323,17 +369,13 @@ class Game{
 				}
 				if(!finished) handleEvent(event);
 			}
-			ticks = SDL_GetTicks();
-			dt = (float)(ticks-oldTicks)/1000.0;
-			oldTicks = ticks;
-			SDL_RenderClear(ren);
-			show();
-			SDL_RenderPresent(ren);
+		
 		}
-		int end = SDL_GetTicks();
-		cout << "FPS " << (numFrames/(float(end-start)/1000)) <<endl;
-	}	
-	virtual void show() = 0;
+			SDL_WaitThread(renderThread,&result);
+			SDL_WaitThread(updateThread,&result);
+	}
+	virtual void update(float dt)=0;	
+	virtual void show(int ticks) = 0;
 	virtual void handleEvent(SDL_Event &event) = 0;
 };
 
@@ -347,7 +389,6 @@ class myGame:public Game {
 	bool trigger; 
 	int fire; 
 	int firing;
-	int mouseX, mouseY;
 	
 	public:
 	void init(const char *gameName = "My Game", int maxW=640, int maxH=480, int startX=0, int startY=0) {
@@ -373,18 +414,23 @@ class myGame:public Game {
 	}
 	
 	//Show method now passes camera, allows rendering of tiles within only the camera (saves fps and can  center)
-	void show(){
-		setCamera(player);
+	void show(int ticks){
 		bg.show(ren,camera);
 		player.showFrame(ren,camera,ticks,fire);
-		player.update();
 		
 		SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
 		if(trigger) SDL_RenderFillRect(ren, &triggerBox);
 		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
 	}
 	
+	void update(float dt){
+		setCamera(player);
+		player.update();
+		
+	}
+	
 	void handleEvent(SDL_Event &event){
+		player.handleMyEvent(event);
 		fire = 0;
 		switch(event.type){
 			case SDL_KEYDOWN:

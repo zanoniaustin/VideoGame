@@ -1,3 +1,6 @@
+Austin: I am working on the enemy class I know there is some stuff wrong with it just wanted to get the bare bones of it loaded up.
+	I am gonna be working on it more though.
+
 To-Do:
 	-Put timing functions in place & on screen
 	-Figure out what assets we will be using

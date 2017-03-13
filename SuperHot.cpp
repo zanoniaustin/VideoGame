@@ -1,5 +1,5 @@
 #include <SDL2/SDL.h>
-//#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_ttf.h>
 #include <string>
 #include <iostream>
 #include <vector>
@@ -339,6 +339,11 @@ class Game{
 			cout << "SDL_Init Error: " << SDL_GetError() << endl;
 		}
 		win = SDL_CreateWindow(gameName, startX, startY, maxH, maxW, SDL_WINDOW_SHOWN);
+		if(TTF_Init()==-1){
+				cout << "TTF init errror" <<endl << "CLOSING..."<<endl;
+				SDL_Quit();
+			
+		}
 		if (win == NULL){
 			cout << "SDL_CreateWindow Error: " << SDL_GetError() << endl;
 			SDL_Quit();

@@ -16,6 +16,7 @@ class Sprite:public Animation{
 	public:
 	float x,dx,ax;
 	float y,dy,ay;
+	float angle;
 	Sprite(){
 		x=150;
 		y=150;
@@ -32,8 +33,8 @@ class Sprite:public Animation{
 		this->ax=ax;
 		this->ay=ay;
 	}
-	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int time, int x, int y){
-		Animation::show(ren,camera,time,x,y);
+	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, SDL_Point* center, int time, int x, int y){
+		Animation::show(ren,camera,center,time,x,y);
 	}
 		
 	virtual void update(){

@@ -12,6 +12,7 @@
 using namespace std;
 class AnimationFrame {
 	SDL_Texture *frame; 
+	double x;
 	int time; // ms
 	int w,h;//width & heigt of texture
 	SDL_Rect frameRect;
@@ -25,12 +26,12 @@ class AnimationFrame {
 	}
 	
 	//shows frame at location X,Y
-	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int x=0, int y=0){
+	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, SDL_Point* center,int x=0, int y=0){
 		SDL_Rect  dest; //Destination is offset on screen placement
 		dest.x=x-camera.x; dest.y=y-camera.y;
 		dest.h=frameRect.h; dest.w=frameRect.w;
 		//ren, frame, sprite(rect), output(rect)
-		SDL_RenderCopy(ren, frame, &frameRect, &dest);
+		SDL_RenderCopyEx(ren, frame, &frameRect, &dest,0,center,SDL_FLIP_NONE);
 	}	
 	int getTime() {
 		return time;
@@ -55,7 +56,7 @@ class Animation {
 		totalTime += c->getTime();
 	}
 
-	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, int time,int x=0,int y=0){
+	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, SDL_Point* center,int time,int x=0,int y=0){
 		
 		int aTime = time % totalTime;
 		int tTime = 0;
@@ -64,7 +65,7 @@ class Animation {
 			tTime += frames[i]->getTime();
 			if (aTime <= tTime)break;
 		}
-		frames[i]->show(ren,camera,x,y);
+		frames[i]->show(ren,camera,center,x,y);
 	}
 
 	virtual void destroy() {

@@ -95,7 +95,7 @@ class myGame:public Game {
 	void update(float dt){
 		setCamera(player);
 		player.update();
-		enemy.update();
+		enemy.update(player.x,player.y);
 	}
 	
 	void handleEvent(SDL_Event &event){
@@ -161,6 +161,11 @@ class myGame:public Game {
 				cout << player.angle << endl;
 				break;*/
 		}
+		float a,b;
+		float pi = 3.141592653589793;
+		a = player.x - event.motion.x;
+		b = player.y - event.motion.y;
+		player.angle = atan(a/b) * 360 / pi;
 	}
 	
 	void setRect(SDL_Rect &rect,int x,int y, int w, int h){

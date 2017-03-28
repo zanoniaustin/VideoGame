@@ -15,6 +15,7 @@ class Player:public Sprite{
 	SDL_Point* center;
 	public:
 	int frameID;
+	float angle;
 	Player(){
 		x=300;
 		y=300;
@@ -23,6 +24,7 @@ class Player:public Sprite{
 		center = new SDL_Point;
 		center->x=x;
 		center->y=y;
+		angle = 0;
 	}
 	Player(float x, float y, float dx, float dy){
 		this->x=x;
@@ -32,7 +34,7 @@ class Player:public Sprite{
 	}
 	
 	void loadPlayer(SDL_Renderer *ren,MediaManager &texHandle){
-		SDL_Rect frameRect; //used to create sprite frames (x,y,w,h)
+		SDL_Rect frameRect;
 		setRect(frameRect,158,252,30,24);
 		this->addFrame(new AnimationFrame(texHandle.load(ren,"../assets/CharacterSprite.bmp"),frameRect,300)); //media manager handle
 		
@@ -44,9 +46,8 @@ class Player:public Sprite{
 	}
 	
 	void showFrame(SDL_Renderer *ren, SDL_Rect &camera,int time){
-		frames[frameID]->show(ren,camera,center,x,y);
+		frames[frameID]->show(ren,camera,center,angle,x,y);
 		frameID = 0;
-		//SDL_RendeCopyEx(ren,frames,NULL,NULL,angle,NULL,SDL_FLIP_NONE);
 	}
 	
 	void setRect(SDL_Rect &rect,int x,int y, int w, int h){
@@ -75,6 +76,7 @@ class Enemy:public Sprite{
 	int frameID;
 	SDL_Point* center;
 	public:
+	float angle;
 	Enemy(){
 		x=200;
 		y=200;
@@ -83,6 +85,7 @@ class Enemy:public Sprite{
 		center =  new SDL_Point;
 		center->x=x;
 		center->y=y;
+		angle = 0;
 	}
 	Enemy(float x, float y, float dx, float dy){
 		this->x=x;
@@ -103,7 +106,7 @@ class Enemy:public Sprite{
 		this->addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));*/
 	}
 	void showFrame(SDL_Renderer *ren, SDL_Rect &camera,int time){
-		frames[frameID]->show(ren,camera,center,x,y);
+		frames[frameID]->show(ren,camera,center,angle,x,y);
 	}
 	void speed(int px, int py){
 		//player_position.x = px;
@@ -120,9 +123,9 @@ class Enemy:public Sprite{
 			dx = 0;
 			dy = 0;
 	}
-	virtual void update(){
-		center->x=x;
-		center->y=y;
+	virtual void update(int a, int b){
+		center->x=a;
+		center->y=b;
 		Sprite::update();
 	}
 	void setRect(SDL_Rect &rect,int x,int y, int w, int h){

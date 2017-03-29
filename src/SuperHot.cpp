@@ -42,24 +42,26 @@ class myGame:public Game {
 	
 	SDL_Rect triggerBox;
 	Player player; 
+	Enemy enemy;
 	BackGround bg; //bg doesnt move & needs to be placed X,Y
 	bool trigger; 
-	int fire; 
 	int firing;
+	int button;
 	
 	public:
 	void init(const char *gameName = "My Game", int maxW=640, int maxH=480, int startX=0, int startY=0) {
 		Game::init(gameName,SCREEN_HEIGHT,SCREEN_WIDTH); //changed the size to fit tiles (8*8 right now)
 		trigger = false;
+		button = 0;
 		triggerTime=0;
 		timeFont = TTF_OpenFont( "../assets/8bit.TTF", 28 );
 		timeColor={0,0,0};
-		fire = 0;
 		firing = 1;
 		setRect(triggerBox,0,0,100,80);
 		setRect(camera,0,0,SCREEN_WIDTH,SCREEN_HEIGHT);
 		
 		player.loadPlayer(ren,texHandle);
+		enemy.loadEnemy(ren,texHandle);
 		loadBackground(); 
 	}
 	
@@ -73,7 +75,8 @@ class myGame:public Game {
 	//Show method now passes camera, allows rendering of tiles within only the camera (saves fps and can  center)
 	void show(int ticks){
 		bg.show(ren,camera);
-		player.showFrame(ren,camera,ticks,fire);
+		player.showFrame(ren,camera,ticks);
+		enemy.showFrame(ren,camera,ticks);
 		
 		if(trigger){
 			triggerTime +=.1;
@@ -89,51 +92,77 @@ class myGame:public Game {
 	void update(float dt){
 		setCamera(player);
 		player.update();
-		
+		enemy.update(player.x,player.y);
 	}
 	
 	void handleEvent(SDL_Event &event){
 		player.handleMyEvent(event);
-		fire = 0;
 		switch(event.type){
 			case SDL_KEYDOWN:
 				if(event.key.keysym.sym == SDLK_w){
 					player.dy = -5;
+					enemy.speed(player.x,player.y);
 					trigger = true;
 				}
 				if(event.key.keysym.sym == SDLK_a){
 					player.dx = -5;
+					enemy.speed(player.x,player.y);
 					trigger = true;
 				}
 				if(event.key.keysym.sym == SDLK_s){
 					player.dy = 5;
+					enemy.speed(player.x,player.y);
 					trigger = true;
 				}
 				if(event.key.keysym.sym == SDLK_d){
 					player.dx = 5;
+					enemy.speed(player.x,player.y);
 					trigger = true;
 				}
 				break;
 			case SDL_KEYUP:
 				trigger = false;
-				if(event.key.keysym.sym == SDLK_w) player.dy = 0;				
-				else if(event.key.keysym.sym == SDLK_a)	player.dx = 0;		
-				else if(event.key.keysym.sym == SDLK_s) player.dy = 0;			
-				else if(event.key.keysym.sym == SDLK_d)	player.dx = 0;
+				if(event.key.keysym.sym == SDLK_w) {
+					player.dy = 0;	
+					enemy.stop();	
+				}		
+				else if(event.key.keysym.sym == SDLK_a)	{
+					player.dx = 0;	
+					enemy.stop();
+				}	
+				else if(event.key.keysym.sym == SDLK_s) {
+					player.dy = 0;	
+					enemy.stop();
+				}		
+				else if(event.key.keysym.sym == SDLK_d)	{
+					player.dx = 0;
+					enemy.stop();
+				}
 				break;
 			case SDL_MOUSEBUTTONDOWN:
 				if (event.button.button == SDL_BUTTON_LEFT){
+					//player.angle = atan(event.motion.x/event.motion.y);
+					//cout << player.angle << endl;
 					if (firing == 1){
-						fire = firing;
+						player.frameID = firing;
 						firing += 1;
 					}
 					else if (firing == 2){
-						fire = firing;
+						player.frameID = firing;
 						firing -= 1;
 					}
 				}
 				break;
+			/*case SDL_MOUSEMOTION:
+				player.angle = atan(event.motion.x/event.motion.y);
+				cout << player.angle << endl;
+				break;*/
 		}
+		float a,b;
+		float pi = 3.141592653589793;
+		a = player.x - event.motion.x;
+		b = player.y - event.motion.y;
+		player.angle = atan(a/b) * 360 / pi;
 	}
 	
 	void setRect(SDL_Rect &rect,int x,int y, int w, int h){

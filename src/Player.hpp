@@ -12,12 +12,19 @@
 #include "Sprite.hpp"
 
 class Player:public Sprite{
+	SDL_Point* center;
 	public:
+	int frameID;
+	float angle;
 	Player(){
 		x=300;
 		y=300;
 		dx=0;
 		dy=0;
+		center = new SDL_Point;
+		center->x=x;
+		center->y=y;
+		angle = 0;
 	}
 	Player(float x, float y, float dx, float dy){
 		this->x=x;
@@ -27,7 +34,7 @@ class Player:public Sprite{
 	}
 	
 	void loadPlayer(SDL_Renderer *ren,MediaManager &texHandle){
-		SDL_Rect frameRect; //used to create sprite frames (x,y,w,h)
+		SDL_Rect frameRect;
 		setRect(frameRect,158,252,30,24);
 		this->addFrame(new AnimationFrame(texHandle.load(ren,"../assets/CharacterSprite.bmp"),frameRect,300)); //media manager handle
 		
@@ -38,8 +45,9 @@ class Player:public Sprite{
 		this->addFrame(new AnimationFrame(texHandle.load(ren,"../assets/CharacterSprite.bmp"),frameRect,50));
 	}
 	
-	void showFrame(SDL_Renderer *ren, SDL_Rect &camera,int time, int frameID){
-		frames[frameID]->show(ren,camera,x,y);
+	void showFrame(SDL_Renderer *ren, SDL_Rect &camera,int time){
+		frames[frameID]->show(ren,camera,center,angle,x,y);
+		frameID = 0;
 	}
 	
 	void setRect(SDL_Rect &rect,int x,int y, int w, int h){
@@ -50,6 +58,8 @@ class Player:public Sprite{
 	}
 	
 	virtual void update(){
+		center->x=x;
+		center->y=y;
 		Sprite::update();
 	}
 	
@@ -58,21 +68,24 @@ class Player:public Sprite{
 	}
 	//sprite can handle his own event
 	void handleMyEvent(SDL_Event &e){
-		
-		
-		
-		
+	
 	}
 };
 
 class Enemy:public Sprite{
 	int frameID;
+	SDL_Point* center;
 	public:
+	float angle;
 	Enemy(){
 		x=200;
 		y=200;
 		dx=0;
 		dy=0;
+		center =  new SDL_Point;
+		center->x=x;
+		center->y=y;
+		angle = 0;
 	}
 	Enemy(float x, float y, float dx, float dy){
 		this->x=x;
@@ -93,7 +106,27 @@ class Enemy:public Sprite{
 		this->addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));*/
 	}
 	void showFrame(SDL_Renderer *ren, SDL_Rect &camera,int time){
-		frames[frameID]->show(ren,camera,x,y);
+		frames[frameID]->show(ren,camera,center,angle,x,y);
+	}
+	void speed(int px, int py){
+		//player_position.x = px;
+		//player_position.y = py;
+		if(px == x) dx=0;
+		else if(px<x) dx=-1;
+		else if(px>x) dx=1;
+		
+		if(py==y)dy=0;
+		else if(py<y)dy=-1;
+		else if(py>y)dy=1;
+	}
+	void stop(){
+			dx = 0;
+			dy = 0;
+	}
+	virtual void update(int a, int b){
+		center->x=a;
+		center->y=b;
+		Sprite::update();
 	}
 	void setRect(SDL_Rect &rect,int x,int y, int w, int h){
 		rect.x=x;

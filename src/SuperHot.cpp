@@ -64,11 +64,8 @@ class myGame:public Game {
 	}
 	
 	void loadBackground(){
-		SDL_Rect frameRect;
-		for(int i=0;i<6;i++){
-		setRect(frameRect,i*TILE_WIDTH,0,TILE_WIDTH,TILE_HEIGHT);//loads all the tiles directly across the spritesheet
-		bg.addtile(i,new Tile(texHandle.load(ren,"../assets/DungeonTiles.bmp"),frameRect)); //put them in Map for bg
-		}
+		SDL_Texture *set = texHandle.load(ren,"../assets/DungeonTiles.bmp");
+		bg.createTileSet(set);
 		bg.buildMap();//put the map together
 		
 	}
@@ -79,7 +76,7 @@ class myGame:public Game {
 		player.showFrame(ren,camera,ticks,fire);
 		
 		if(trigger){
-			triggerTime +=.1	;
+			triggerTime +=.1;
 		
 			triggerTime<100? setRect(triggerBox,0,0,64,60) :setRect(triggerBox,0,0,(floor(log(triggerTime)*16)),60);
 			currentTime = ToString(triggerTime);

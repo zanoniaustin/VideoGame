@@ -153,16 +153,16 @@ class myGame:public Game {
 					}
 				}
 				break;
-			/*case SDL_MOUSEMOTION:
-				player.angle = atan(event.motion.x/event.motion.y);
-				cout << player.angle << endl;
-				break;*/
 		}
+		//angle calculation testing here
 		float a,b;
 		float pi = 3.141592653589793;
 		a = player.x - event.motion.x;
 		b = player.y - event.motion.y;
-		player.angle = atan(a/b) * 360 / pi;
+		player.angle = atan2(b,a) * 180 /  -180 ;
+		a=player.x-enemy.x;
+		b=player.y-enemy.y;
+		enemy.angle = atan2(b,a)*180 /pi;
 	}
 	
 	void setRect(SDL_Rect &rect,int x,int y, int w, int h){
@@ -182,11 +182,11 @@ class myGame:public Game {
 		if(camera.y<0){
 			camera.y=0;
 		}
-		if(camera.x>TILE_WIDTH*MAPSIZE-camera.w){
-			camera.x=TILE_WIDTH*MAPSIZE-camera.w;
+		if(camera.x>TILE_WIDTH*MAPSIZE*4-camera.w){
+			camera.x=TILE_WIDTH*MAPSIZE*4-camera.w;
 		}
-		if(camera.y>TILE_HEIGHT*MAPSIZE-camera.h){
-			camera.y=TILE_HEIGHT*MAPSIZE-camera.h;
+		if(camera.y>TILE_HEIGHT*MAPSIZE*4-camera.h){
+			camera.y=TILE_HEIGHT*MAPSIZE*4-camera.h;
 		}
 	}
 	void done(){

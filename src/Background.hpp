@@ -170,11 +170,11 @@ class Tile{
 	virtual void show(SDL_Renderer *ren,SDL_Rect &camera,int x=0,int y=0){
 		SDL_Rect destRect;
 		//
-		destRect.w=frameRect.w*2;
-		destRect.h=frameRect.h*2;
+		destRect.w=frameRect.w*4;
+		destRect.h=frameRect.h*4;
 		//*4 because tiles were too small
-		destRect.x=x*2;//set up x and y for screen
-		destRect.y=y*2;
+		destRect.x=x*4;//set up x and y for screen
+		destRect.y=y*4;
 		if(isCollided(camera,destRect)){
 			destRect.x-=camera.x;//if they are collided with camera, render them according to screen
 			destRect.y-=camera.y;//this was were that scrolling offset was wrong
@@ -198,7 +198,7 @@ class BackGround{
 	public:
 	void addtile(int type,Tile *t){
 		if(tiles.count(type)==0){
-			cout << "adding tile: "<< type<<endl;
+			//cout << "adding tile: "<< type<<endl;
 			tiles[type]=t;
 		}
 	}
@@ -226,7 +226,6 @@ class BackGround{
 				fin >> type;
 				grid[x][y]=type; 
 			}
-			cout << endl;
 		}
 		fin.close();
 	}

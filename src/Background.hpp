@@ -5,6 +5,7 @@
 #include <string>
 #include <math.h>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <sstream>
 #include <map>
@@ -13,60 +14,123 @@
 using namespace std;
 
 //Terrain constants
-const int MAPSIZE= 150;//50*64=3200X3200PX actual map size
+const int MAPSIZE= 50;//50*64=3200X3200PX actual map size
 const int TILE_HEIGHT =16;
 const int TILE_WIDTH = 16;
 
 //types of tiles that exist
-//no longer true
 enum TileType {
-	Floor_TL
+	//Row 1
+	Floor_TL,//0
+	Floor_TM,
+	Floor_TM1,
+	FLoor_TM2,
+	Floor_TR,
+	Isle_TL,//5
+	Isle_TM,
+	Isle_TR,
+	Stair_Floor,
+	Stair_Shadow,
+	Stair,//10
+	Stair1,
+	Pool_TL,
+	Pool_TM,
+	Pool_TR,
+	Pool_ITL,//15
+	Pool_ITR,
+	Pool_Isle_Vert_top,
+	Pool_Isle_TL,
+	Pool_Isle_TM,
+	Pool_Isle_TR,//20
 	
-	Floor_TM
-	Floor_TM1
-	FLoor_TM2
+	//ROW 2
+	Floor_L,//21
+	Floor_M,
+	Floor_M1,
+	Floor_M2,
+	Floor_R,//25
+	Isle_L,
+	BlankTile,
+	Isle_R,
+	Floor_Shadow,
+	Floor_ITL,//30
+	Floor_ITR,
+	Stair_Shadow1,
+	Pool_L,
+	Pool_M,
+	Pool_R,//35
+	Pool_IBL,
+	Pool_IBR,
+	Pool_Isle_Vert_bot,
+	Pool_Isle_L,
+	Pool_Isle,//40
+	Pool_Isle_R,
 	
-	Floor_TR
+	//ROW 3
+	Floor_L1,
+	Floor_M3,
+	Floor_M4,
+	Floor_M5,//45
+	Floor_R1,
+	Isle_BL,
+	Isle_BM,
+	Isle_BR,
+	Floor_Shadow_b,//50
+	Floor_IBL,
+	Floor_IBR,
+	BLackTile,
+	Pool_BL,
+	Pool_BM,//55
+	Pool_BR,
+	Waterfall,
+	Fall_L,
+	Stream_vert,
+	Pool_Isle_BL,//60
+	Pool_Isle_BM,
+	Pool_Isle_BR,
 	
-	Isle_TL
-	Isle_TM
-	Isle_TR
+	//Row 4
+	Floor_L2,
+	Floor_M6,
+	Floor_M7,//65
+	Floor_M8,
+	Floor_End_t,
+	Floor_End_l,
+	Floor_End_r,
+	OpenDoor,//70
+	WoodDoor,
+	MetalDoor,
+	Stream_TL,
+	Stream_TM,
+	Stream_TR,//75
+	Stream_BL,
+	Stream_BM,
+	Stream_BR,
+	Wall1,
+	Wall2,//80
+	BlankTile2,
+	BlankTile3,
 	
-	Stair_Floor
-	Stair_Shadow
-	Stair
-	Stair1
-	
-	Pool_TL
-	Pool_TM
-	Pool TR
-	
-	Pool_ITL
-	Pool_ITR
-	Pool_IBL
-	Pool_IBR
-	
-	Pool_Isle_Vert_top
-	Pool_Isle_TL
-	Pool_Isle_TM
-	Pool_Isle_TR
-	
-	//ROW
-	
-	Floor_L
-	Floor_M
-	Floor_M1
-	Floor_M2
-	Floor_R
-	Isle_L
-	//Blank
-	Isle_R
-	Floor_Shadow
-	Floor_ITL
-	Floor_ITR
-	
-	Stair
-	
+	//Row 5
+	Floor_BL,
+	Floor_BM,
+	Floor_BM1,//85
+	Floor_BM2,
+	Floor_BR,
+	Floor_End_b,
+	Wall3,
+	Floor_end,//90
+	Gutter_open,
+	Gutter_close,
+	Gutter_Metal,
+	Stream_end_t,
+	Stream_end_b,//95
+	Stream_end_l,
+	Stream_end_r,
+	Pool_Isle_end_l,
+	Pool_Isle_end_r,
+	BlankTile4,//100
+	Wall_end
 	};
 
 bool isCollided(SDL_Rect r1, SDL_Rect r2){
@@ -106,11 +170,11 @@ class Tile{
 	virtual void show(SDL_Renderer *ren,SDL_Rect &camera,int x=0,int y=0){
 		SDL_Rect destRect;
 		//
-		destRect.w=frameRect.w*2;
-		destRect.h=frameRect.h*2;
+		destRect.w=frameRect.w*4;
+		destRect.h=frameRect.h*4;
 		//*4 because tiles were too small
-		destRect.x=x*2;//set up x and y for screen
-		destRect.y=y*2;
+		destRect.x=x*4;//set up x and y for screen
+		destRect.y=y*4;
 		if(isCollided(camera,destRect)){
 			destRect.x-=camera.x;//if they are collided with camera, render them according to screen
 			destRect.y-=camera.y;//this was were that scrolling offset was wrong
@@ -130,23 +194,40 @@ class BackGround{
 	map<int,Tile *> tiles; //texture for each tile in a neat little map
 	int grid[MAPSIZE][MAPSIZE]; //actually the map (storing tiletype in a 2d array)
 	//used to load the tile type to the map (needed so a map can be built with these)
+	
+	public:
 	void addtile(int type,Tile *t){
 		if(tiles.count(type)==0){
-			cout << "adding tile: "<< type<<endl;
+			//cout << "adding tile: "<< type<<endl;
 			tiles[type]=t;
 		}
 	}
-	
-	public:
+	void createTileSet(SDL_Texture *set){
+		SDL_Rect tileRect;
+		int row=0;
+		for(int i=0;i<101+1;i++){
+			if(i%20==0&&i!=0)row++;
+			tileRect.x=(i%20)*TILE_WIDTH;
+			tileRect.y=row*TILE_HEIGHT;
+			tileRect.w=TILE_WIDTH;
+			tileRect.h=TILE_HEIGHT;
+			this->addtile(i,new Tile(set,tileRect));
+			
+		}
+		
+	}
 	//this is where the actual game map is put together
 	void buildMap(){
-		for(int x=0;x<MAPSIZE;x++){
-			for(int y=0;y<MAPSIZE;y++){
-				//if(x%2==0)
-				grid[x][y]=x%6; //for now I want all floors
-				//else grid[x][y]=FLOOR2;
+		ifstream fin;
+		int type=5;
+		fin.open("../maps/First.txt");//load first map
+		for(int y=0;y<MAPSIZE;y++){
+			for(int x=0;x<MAPSIZE;x++){
+				fin >> type;
+				grid[x][y]=type; 
 			}
 		}
+		fin.close();
 	}
 	//check where the camera is and only render tiles within the frame of the camera :D
 	void show(SDL_Renderer *ren,SDL_Rect &camera){

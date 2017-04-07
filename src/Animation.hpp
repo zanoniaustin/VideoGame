@@ -12,7 +12,6 @@
 using namespace std;
 class AnimationFrame {
 	SDL_Texture *frame; 
-	double x;
 	int time; // ms
 	int w,h;//width & heigt of texture
 	SDL_Rect frameRect;

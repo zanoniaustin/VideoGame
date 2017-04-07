@@ -66,11 +66,8 @@ class myGame:public Game {
 	}
 	
 	void loadBackground(){
-		SDL_Rect frameRect;
-		for(int i=0;i<6;i++){
-		setRect(frameRect,i*TILE_WIDTH,0,TILE_WIDTH,TILE_HEIGHT);//loads all the tiles directly across the spritesheet
-		bg.addtile(i,new Tile(texHandle.load(ren,"../assets/DungeonTiles.bmp"),frameRect)); //put them in Map for bg
-		}
+		SDL_Texture *set = texHandle.load(ren,"../assets/DungeonTiles.bmp");
+		bg.createTileSet(set);
 		bg.buildMap();//put the map together
 		
 	}
@@ -82,7 +79,7 @@ class myGame:public Game {
 		enemy.showFrame(ren,camera,ticks);
 		
 		if(trigger){
-			triggerTime +=.1	;
+			triggerTime +=.1;
 		
 			triggerTime<100? setRect(triggerBox,0,0,64,60) :setRect(triggerBox,0,0,(floor(log(triggerTime)*16)),60);
 			currentTime = ToString(triggerTime);
@@ -156,16 +153,16 @@ class myGame:public Game {
 					}
 				}
 				break;
-			/*case SDL_MOUSEMOTION:
-				player.angle = atan(event.motion.x/event.motion.y);
-				cout << player.angle << endl;
-				break;*/
 		}
+		//angle calculation testing here
 		float a,b;
 		float pi = 3.141592653589793;
 		a = player.x - event.motion.x;
 		b = player.y - event.motion.y;
-		player.angle = atan(a/b) * 360 / pi;
+		player.angle = atan2(b,a) * 180 /  -180 ;
+		a=player.x-enemy.x;
+		b=player.y-enemy.y;
+		enemy.angle = atan2(b,a)*180 /pi;
 	}
 	
 	void setRect(SDL_Rect &rect,int x,int y, int w, int h){
@@ -185,11 +182,11 @@ class myGame:public Game {
 		if(camera.y<0){
 			camera.y=0;
 		}
-		if(camera.x>TILE_WIDTH*MAPSIZE-camera.w){
-			camera.x=TILE_WIDTH*MAPSIZE-camera.w;
+		if(camera.x>TILE_WIDTH*MAPSIZE*4-camera.w){
+			camera.x=TILE_WIDTH*MAPSIZE*4-camera.w;
 		}
-		if(camera.y>TILE_HEIGHT*MAPSIZE-camera.h){
-			camera.y=TILE_HEIGHT*MAPSIZE-camera.h;
+		if(camera.y>TILE_HEIGHT*MAPSIZE*4-camera.h){
+			camera.y=TILE_HEIGHT*MAPSIZE*4-camera.h;
 		}
 	}
 	void done(){

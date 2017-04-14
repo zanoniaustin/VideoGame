@@ -12,6 +12,7 @@
 #include "Animation.hpp"
 
 using namespace std;
+
 class Sprite:public Animation{
 	public:
 	float x,dx,ax;
@@ -36,7 +37,7 @@ class Sprite:public Animation{
 	virtual void show(SDL_Renderer *ren,SDL_Rect &camera,float angle, int time, int x, int y){
 		Animation::show(ren,camera,angle,time,x,y);
 	}
-		
+
 	virtual void update(){
 		x += dx;
 		y += dy;

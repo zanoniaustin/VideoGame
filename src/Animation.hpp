@@ -1,5 +1,6 @@
 #ifndef ANIMATION_HPP
 #define ANIMATION_HPP
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <string>
@@ -10,8 +11,9 @@
 #include <map>
 #include "MediaManager.hpp"
 using namespace std;
+
 class AnimationFrame {
-	SDL_Texture *frame; 
+	SDL_Texture *frame;
 	int time; // ms
 	SDL_Rect frameRect;
 	public:
@@ -22,7 +24,7 @@ class AnimationFrame {
 		frameRect = spriteRect;
 		time = newTime;
 	}
-	
+
 	//shows frame at location X,Y
 	virtual void show(SDL_Renderer *ren,SDL_Rect &camera,float angle,int x=0, int y=0){
 		SDL_Rect  dest; //Destination is offset on screen placement
@@ -30,7 +32,7 @@ class AnimationFrame {
 		dest.h=frameRect.h; dest.w=frameRect.w;
 		//ren, frame, sprite(rect), output(rect)
 		SDL_RenderCopyEx(ren, frame, &frameRect, &dest,angle,NULL,SDL_FLIP_NONE);
-	}	
+	}
 	int getTime() {
 		return time;
 	}
@@ -38,7 +40,6 @@ class AnimationFrame {
 		SDL_DestroyTexture(frame);
 	}
 };
-
 
 class Animation {
 	protected:
@@ -55,7 +56,6 @@ class Animation {
 	}
 
 	virtual void show(SDL_Renderer *ren,SDL_Rect &camera,float angle,int time,int x=0,int y=0){
-		
 		int aTime = time % totalTime;
 		int tTime = 0;
 		unsigned int i;

@@ -1,30 +1,32 @@
 #ifndef GAME_HPP
 #define GAME_HPP
+
 #include <string>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 #include <sstream>
 #include <iostream>
-
+#include "Music.hpp"
 
 class Game{
-	SDL_Thread *updateThread,*renderThread;
+	SDL_Thread *updateThread, *renderThread;
 	protected:
-	SDL_Window *win;
-	SDL_Renderer *ren;
+		SDL_Window *win;
+		SDL_Renderer *ren;
 	bool finished;
 	int ticks;
 	float dt;
 	public:
+	Music music;
 	virtual void init(const char *gameName, int maxW = 640, int maxH = 480, int startX = 100, int startY =100){
 		if (SDL_Init(SDL_INIT_VIDEO) != 0){
 			cout << "SDL_Init Error: " << SDL_GetError() << endl;
 		}
 		win = SDL_CreateWindow(gameName, startX, startY, maxH, maxW, SDL_WINDOW_SHOWN);
 		if(TTF_Init()==-1){
-				cout << "TTF init errror" <<endl << "CLOSING..."<<endl;
+				cout << "TTF init error" <<endl << "CLOSING..."<<endl;
 				SDL_Quit();
-			
 		}
 		if (win == NULL){
 			cout << "SDL_CreateWindow Error: " << SDL_GetError() << endl;
@@ -35,6 +37,13 @@ class Game{
 			SDL_DestroyWindow(win);
 			cout << "SDL_CreateRenderer Error: " << SDL_GetError() << endl;
 			SDL_Quit();
+		}
+		//Initialize SDL_mixer
+    if ( Mix_OpenAudio( 22050, MIX_DEFAULT_FORMAT, 2, 4096 ) == -1 ) {
+        cout << "SDL2_mixer init error" <<endl << "CLOSING..."<<endl;
+    }
+		if (!music.load_files()) {
+				cout << "error loading music and effects" <<endl << "CLOSING..."<<endl;
 		}
 	}
 	virtual void done(){
@@ -56,14 +65,12 @@ class Game{
 			update(dt);
 			oldTicks = ticks;
 			SDL_Delay(10);
-
 		}
 	}
 	static int renderGame(void* self){
 		Game *g=(Game*)self;
 		g->renderGame();
 		return 0;
-		
 	}
 	void renderGame(){
 		int start = SDL_GetTicks();
@@ -85,7 +92,7 @@ class Game{
 		finished = false;
 		updateThread=SDL_CreateThread(updateGame,"Update",this);
 		renderThread=SDL_CreateThread(renderGame,"Render",this);
-		while(!finished) {
+    while(!finished) {
 			SDL_Event event;
 			while(SDL_PollEvent(&event)) {
 				if(event.type == SDL_WINDOWEVENT){
@@ -98,12 +105,11 @@ class Game{
 				}
 				if(!finished) handleEvent(event);
 			}
-		
 		}
-			SDL_WaitThread(renderThread,&result);
-			SDL_WaitThread(updateThread,&result);
+		SDL_WaitThread(renderThread,&result);
+		SDL_WaitThread(updateThread,&result);
 	}
-	virtual void update(float dt)=0;	
+	virtual void update(float dt)=0;
 	virtual void show(int ticks) = 0;
 	virtual void handleEvent(SDL_Event &event) = 0;
 };

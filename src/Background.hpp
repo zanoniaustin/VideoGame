@@ -1,5 +1,6 @@
 #ifndef BACKGROUND_HPP
 #define BACKGROUND_HPP
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <string>
@@ -42,7 +43,7 @@ enum TileType {
 	Pool_Isle_TL,
 	Pool_Isle_TM,
 	Pool_Isle_TR,//20
-	
+
 	//ROW 2
 	Floor_L,//21
 	Floor_M,
@@ -65,7 +66,7 @@ enum TileType {
 	Pool_Isle_L,
 	Pool_Isle,//40
 	Pool_Isle_R,
-	
+
 	//ROW 3
 	Floor_L1,
 	Floor_M3,
@@ -88,7 +89,7 @@ enum TileType {
 	Pool_Isle_BL,//60
 	Pool_Isle_BM,
 	Pool_Isle_BR,
-	
+
 	//Row 4
 	Floor_L2,
 	Floor_M6,
@@ -110,7 +111,7 @@ enum TileType {
 	Wall2,//80
 	BlankTile2,
 	BlankTile3,
-	
+
 	//Row 5
 	Floor_BL,
 	Floor_BM,
@@ -143,16 +144,14 @@ bool isCollided(SDL_Rect r1, SDL_Rect r2){
 	int top2 = r2.y;
 	int bot1 = r1.y+r1.h;
 	int bot2 = r2.y+r2.h;
-	
+
 	//test if r1 is outside r2 (return false if it is on any axis)
 	if(bot1<=top2)return false;
 	if(top1>=bot2)return false;
-	if(right1<=left2)return false; 
+	if(right1<=left2)return false;
 	if(left1>=right2)return false;
 	return true;
-	
 }
-
 
 //given so no time is needed.
 class Tile{
@@ -166,7 +165,7 @@ class Tile{
 	SDL_Rect getRect(){ //used to check collision with camera
 		return frameRect;
 	}
-	
+
 	virtual void show(SDL_Renderer *ren,SDL_Rect &camera,int x=0,int y=0){
 		SDL_Rect destRect;
 		//
@@ -181,20 +180,18 @@ class Tile{
 			SDL_RenderCopy(ren,frame,&frameRect,&destRect);
 		}
 	}
-	
-	
+
 	void destroy() {
 		SDL_DestroyTexture(frame);
 	}
-		
-};
 
+};
 
 class BackGround{
 	map<int,Tile *> tiles; //texture for each tile in a neat little map
 	int grid[MAPSIZE][MAPSIZE]; //actually the map (storing tiletype in a 2d array)
 	//used to load the tile type to the map (needed so a map can be built with these)
-	
+
 	public:
 	void addtile(int type,Tile *t){
 		if(tiles.count(type)==0){
@@ -212,9 +209,7 @@ class BackGround{
 			tileRect.w=TILE_WIDTH;
 			tileRect.h=TILE_HEIGHT;
 			this->addtile(i,new Tile(set,tileRect));
-			
 		}
-		
 	}
 	//this is where the actual game map is put together
 	void buildMap(){
@@ -224,7 +219,7 @@ class BackGround{
 		for(int y=0;y<MAPSIZE;y++){
 			for(int x=0;x<MAPSIZE;x++){
 				fin >> type;
-				grid[x][y]=type; 
+				grid[x][y]=type;
 			}
 		}
 		fin.close();
@@ -236,9 +231,7 @@ class BackGround{
 					tiles[grid[x][y]]->show(ren,camera,(x*TILE_WIDTH),(y*TILE_HEIGHT));
 			}
 		}
-	}	
+	}
 
-	
-	
 };
 #endif

@@ -1,5 +1,6 @@
 #ifndef MEDIAMANAGER_HPP
 #define MEDIAMANAGER_HPP
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <string>
@@ -21,7 +22,6 @@ class MediaManager {
 			if(bmp!=NULL){
 				SDL_SetColorKey(bmp, SDL_TRUE, SDL_MapRGB(bmp->format, 0, 255, 0));
 				images[imagePath]=SDL_CreateTextureFromSurface(ren,bmp);
-				
 			}
 			SDL_FreeSurface(bmp);
 		}

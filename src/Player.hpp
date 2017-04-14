@@ -69,7 +69,6 @@ class Player:public Sprite{
 	}
 	//sprite can handle his own event
 	void handleMyEvent(SDL_Event &e){
-
 	}
 };
 
@@ -83,7 +82,7 @@ class Enemy:public Sprite{
 		y=200;
 		dx=0;
 		dy=0;
-		center =  new SDL_Point;
+		center = new SDL_Point;
 		center->x=x;
 		center->y=y;
 		angle = 0;
@@ -137,7 +136,6 @@ class Enemy:public Sprite{
 	}
 	void destroy(){
 		Sprite::destroy();
-
 	}
 };
 

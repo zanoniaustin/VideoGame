@@ -29,11 +29,12 @@ string ToString(T val){
     return stream.str();
 }
 
+enum GAMESTATE {MainMenu,Playing,Paused,GameOver,Quit};
 
 class myGame:public Game {
 	MediaManager texHandle; //use me to construct animationFrames (only one in the entire game)
 	SDL_Rect camera; 
-	
+	GAMESTATE gameState;
 	TTF_Font *timeFont;
 	SDL_Color timeColor;
 	string currentTime;
@@ -60,9 +61,19 @@ class myGame:public Game {
 		setRect(triggerBox,0,0,100,80);
 		setRect(camera,0,0,SCREEN_WIDTH,SCREEN_HEIGHT);
 		
+		gameState=MainMenu;
+		//createMenu();
 		player.loadPlayer(ren,texHandle);
 		enemy.loadEnemy(ren,texHandle);
 		loadBackground(); 
+	}
+	
+	void createMenu(){
+		SDL_Texture *set = texHandle.load(ren,"../assets/DungeonTiles.bmp");
+		bg.createTileSet(set);
+		bg.buildMainMenu();
+		
+		
 	}
 	
 	void loadBackground(){
@@ -92,7 +103,7 @@ class myGame:public Game {
 	void update(float dt){
 		setCamera(player);
 		player.update();
-		enemy.update(player.x,player.y);
+		enemy.update();
 	}
 	
 	void handleEvent(SDL_Event &event){
@@ -157,9 +168,9 @@ class myGame:public Game {
 		//angle calculation testing here
 		float a,b;
 		float pi = 3.141592653589793;
-		a = player.x - event.motion.x;
-		b = player.y - event.motion.y;
-		player.angle = atan2(b,a) * 180 /  -180 ;
+		a = player.x - camera.x - event.motion.x;
+		b = player.y - camera.y- event.motion.y;
+		player.angle = atan2(b,a) * 180 /pi  -180 ;
 		a=player.x-enemy.x;
 		b=player.y-enemy.y;
 		enemy.angle = atan2(b,a)*180 /pi;

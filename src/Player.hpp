@@ -12,7 +12,6 @@
 #include "Sprite.hpp"
 
 class Player:public Sprite{
-	SDL_Point* center;
 	public:
 	int frameID;
 	float angle;
@@ -21,9 +20,6 @@ class Player:public Sprite{
 		y=300;
 		dx=0;
 		dy=0;
-		center = new SDL_Point;
-		center->x=x;
-		center->y=y;
 		angle = 0;
 	}
 	Player(float x, float y, float dx, float dy){
@@ -46,7 +42,7 @@ class Player:public Sprite{
 	}
 	
 	void showFrame(SDL_Renderer *ren, SDL_Rect &camera,int time){
-		frames[frameID]->show(ren,camera,center,angle,x,y);
+		frames[frameID]->show(ren,camera,angle,x,y);
 		frameID = 0;
 	}
 	
@@ -58,8 +54,6 @@ class Player:public Sprite{
 	}
 	
 	virtual void update(){
-		center->x=x;
-		center->y=y;
 		Sprite::update();
 	}
 	
@@ -74,7 +68,6 @@ class Player:public Sprite{
 
 class Enemy:public Sprite{
 	int frameID;
-	SDL_Point* center;
 	public:
 	float angle;
 	Enemy(){
@@ -82,9 +75,6 @@ class Enemy:public Sprite{
 		y=200;
 		dx=0;
 		dy=0;
-		center =  new SDL_Point;
-		center->x=x;
-		center->y=y;
 		angle = 0;
 	}
 	Enemy(float x, float y, float dx, float dy){
@@ -106,7 +96,7 @@ class Enemy:public Sprite{
 		this->addFrame(new AnimationFrame(texHandle.load(ren,"CharacterSprite.bmp"),frameRect,50));*/
 	}
 	void showFrame(SDL_Renderer *ren, SDL_Rect &camera,int time){
-		frames[frameID]->show(ren,camera,center,angle,x,y);
+		frames[frameID]->show(ren,camera,angle,x,y);
 	}
 	void speed(int px, int py){
 		//player_position.x = px;
@@ -123,9 +113,7 @@ class Enemy:public Sprite{
 			dx = 0;
 			dy = 0;
 	}
-	virtual void update(int a, int b){
-		center->x=a;
-		center->y=b;
+	virtual void update(){
 		Sprite::update();
 	}
 	void setRect(SDL_Rect &rect,int x,int y, int w, int h){

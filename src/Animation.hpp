@@ -13,7 +13,6 @@ using namespace std;
 class AnimationFrame {
 	SDL_Texture *frame; 
 	int time; // ms
-	int w,h;//width & heigt of texture
 	SDL_Rect frameRect;
 	public:
 	//Constructor to be used with Media Manager
@@ -25,7 +24,7 @@ class AnimationFrame {
 	}
 	
 	//shows frame at location X,Y
-	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, SDL_Point* center,float angle,int x=0, int y=0){
+	virtual void show(SDL_Renderer *ren,SDL_Rect &camera,float angle,int x=0, int y=0){
 		SDL_Rect  dest; //Destination is offset on screen placement
 		dest.x=x-camera.x; dest.y=y-camera.y;
 		dest.h=frameRect.h; dest.w=frameRect.w;
@@ -55,7 +54,7 @@ class Animation {
 		totalTime += c->getTime();
 	}
 
-	virtual void show(SDL_Renderer *ren,SDL_Rect &camera, SDL_Point* center,float angle,int time,int x=0,int y=0){
+	virtual void show(SDL_Renderer *ren,SDL_Rect &camera,float angle,int time,int x=0,int y=0){
 		
 		int aTime = time % totalTime;
 		int tTime = 0;
@@ -64,7 +63,7 @@ class Animation {
 			tTime += frames[i]->getTime();
 			if (aTime <= tTime)break;
 		}
-		frames[i]->show(ren,camera,center,angle,x,y);
+		frames[i]->show(ren,camera,angle,x,y);
 	}
 
 	virtual void destroy() {

@@ -1,4 +1,4 @@
-#ifndef GAME_HPP
+ #ifndef GAME_HPP
 #define GAME_HPP
 #include <string>
 #include <SDL2/SDL.h>

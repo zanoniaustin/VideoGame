@@ -31,19 +31,13 @@ string ToString(T val){
     return stream.str();
 }
 
-<<<<<<< HEAD
+
 enum GAMESTATE {MainMenu,Playing,Paused,GameOver,Quit};
 
 class myGame:public Game {
 	MediaManager texHandle; //use me to construct animationFrames (only one in the entire game)
 	SDL_Rect camera; 
 	GAMESTATE gameState;
-=======
-class myGame:public Game {
-	MediaManager texHandle; //use me to construct animationFrames (only one in the entire game)
-	SDL_Rect camera;
-
->>>>>>> 43dd0881b2576228390c57496ba7b62d06964d2d
 	TTF_Font *timeFont;
 	SDL_Color timeColor;
 	string currentTime;
@@ -110,7 +104,11 @@ class myGame:public Game {
 	void update(float dt){
 		setCamera(player);
 		player.update();
-		enemy.update();
+		if (trigger){
+			enemy.speed(player.x,player.y);
+			enemy.update();
+		}
+		else enemy.stop();
 	}
 
 	void handleEvent(SDL_Event &event){
@@ -119,22 +117,18 @@ class myGame:public Game {
 			case SDL_KEYDOWN:
 				if(event.key.keysym.sym == SDLK_w){
 					player.dy = -5;
-					enemy.speed(player.x,player.y);
 					trigger = true;
 				}
 				if(event.key.keysym.sym == SDLK_a){
 					player.dx = -5;
-					enemy.speed(player.x,player.y);
 					trigger = true;
 				}
 				if(event.key.keysym.sym == SDLK_s){
 					player.dy = 5;
-					enemy.speed(player.x,player.y);
 					trigger = true;
 				}
 				if(event.key.keysym.sym == SDLK_d){
 					player.dx = 5;
-					enemy.speed(player.x,player.y);
 					trigger = true;
 				}
 				break;
@@ -142,25 +136,23 @@ class myGame:public Game {
 				trigger = false;
 				if(event.key.keysym.sym == SDLK_w) {
 					player.dy = 0;
-					enemy.stop();
 				}
 				else if(event.key.keysym.sym == SDLK_a)	{
 					player.dx = 0;
-					enemy.stop();
 				}
 				else if(event.key.keysym.sym == SDLK_s) {
 					player.dy = 0;
-					enemy.stop();
 				}
 				else if(event.key.keysym.sym == SDLK_d)	{
 					player.dx = 0;
-					enemy.stop();
 				}
 				break;
 			case SDL_MOUSEBUTTONDOWN:
 				if (event.button.button == SDL_BUTTON_LEFT){
-          //player.angle = atan(event.motion.x/event.motion.y);
-					//cout << player.angle << endl;
+					Bullet b(player.x, player.y);
+					b.loadBullet(ren,texHandle);
+					b.showFrame(ren,camera,ticks);
+					trigger = true;
 					if (firing == 1){
 						player.frameID = firing;
 						firing += 1;
@@ -169,8 +161,11 @@ class myGame:public Game {
 						player.frameID = firing;
 						firing -= 1;
 					}
-          Mix_PlayChannel(-1, music.gunshot, 0);
+				Mix_PlayChannel(-1, music.gunshot, 0);
 				}
+				break;
+			case SDL_MOUSEBUTTONUP:
+				if (event.button.button == SDL_BUTTON_LEFT) trigger = false;
 				break;
 		}
 		//angle calculation testing here
@@ -210,6 +205,7 @@ class myGame:public Game {
 	}
 	void done(){
 		player.destroy();
+		enemy.destroy();
 		Game::done();
 	}
 };

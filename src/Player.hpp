@@ -55,6 +55,10 @@ class Player:public Sprite{
 	}
 
 	virtual void update(){
+		if(x<0)x=0;
+		if(y<0)y=0;
+		if(x>50*64-30)x=50*64-15;
+		if(y>50*64-24)y=50*64-24;
 		Sprite::update();
 	}
 
@@ -62,7 +66,7 @@ class Player:public Sprite{
 		Sprite::destroy();
 	}
 	//sprite can handle his own event
-	void handleMyEvent(SDL_Event &e){
+	void handleMyEvent(SDL_Event &event){
 	}
 };
 
@@ -114,7 +118,7 @@ class Enemy:public Sprite{
 			dy = 0;
 	}
 	virtual void update(){
-		Sprite::update();
+		Sprite::update();		
 	}
 	void setRect(SDL_Rect &rect,int x,int y, int w, int h){
 		rect.x=x;
@@ -122,6 +126,54 @@ class Enemy:public Sprite{
 		rect.w=w;
 		rect.h=h;
 	}
+	void destroy(){
+		Sprite::destroy();
+	}
+};
+
+class Bullet:public Sprite{
+	int x,y;
+	int frameID;
+	public:
+	int dx,dy;
+	Bullet(){
+		x = 0;
+		y = 0;
+		dx = 0;
+		dy = 0;
+		frameID = 0;
+	}
+	Bullet(int x, int y){
+		this->x = x;
+		this->y = y;
+		dx = 0;
+		dy = 3;
+		frameID = 0;
+	}
+	
+	void loadBullet(SDL_Renderer *ren,MediaManager &texHandle, int frameID){
+		this->frameID = frameID;
+		SDL_Rect frameRect; //used to create sprite frames (x,y,w,h)
+		setRect(frameRect,0,0,3,6);
+		this->addFrame(new AnimationFrame(texHandle.load(ren,"../assets/bullet.bmp"),frameRect,300));
+	}
+	
+	void showFrame(SDL_Renderer *ren, SDL_Rect &camera,int time){
+		frames[frameID]->show(ren,camera,angle,x,y);
+	}
+	
+	void shoot(){
+		x += dx;
+		y += dy;
+	}
+	
+	void setRect(SDL_Rect &rect,int x,int y, int w, int h){
+		rect.x=x;
+		rect.y=y;
+		rect.w=w;
+		rect.h=h;
+	}
+	
 	void destroy(){
 		Sprite::destroy();
 	}

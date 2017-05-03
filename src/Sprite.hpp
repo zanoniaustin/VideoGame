@@ -34,6 +34,12 @@ class Sprite:public Animation{
 		this->ax=ax;
 		this->ay=ay;
 	}
+	int w(){
+		return this->frames[0]->frameRect.w;
+	}
+	int h(){
+		return this->frames[0]->frameRect.h;
+	}
 	virtual void show(SDL_Renderer *ren,SDL_Rect &camera,float angle, int time, int x, int y){
 		Animation::show(ren,camera,angle,time,x,y);
 	}

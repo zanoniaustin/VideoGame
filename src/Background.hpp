@@ -23,16 +23,16 @@ const int TILE_WIDTH = 16;
 enum TileType {
 	//Row 1
 	Floor_TL, Floor_TM, Floor_TM1, FLoor_TM2, Floor_TR, Isle_TL, Isle_TM, Isle_TR, Stair_Floor, Stair_Shadow, Stair, Stair1, Pool_TL, Pool_TM, Pool_TR, Pool_ITL, Pool_ITR, Pool_Isle_Vert_top, Pool_Isle_TL, Pool_Isle_TM,	Pool_Isle_TR,//20
-	
+
 	//ROW 2
 	Floor_L, Floor_M, Floor_M1, Floor_M2, Floor_R, Isle_L, BlankTile, Isle_R, Floor_Shadow, Floor_ITL, Floor_ITR, Stair_Shadow1, Pool_L, Pool_M, Pool_R, Pool_IBL, Pool_IBR, Pool_Isle_Vert_bot, Pool_Isle_L, Pool_Isle, Pool_Isle_R,//41
-	
+
 	//ROW 3
-	Floor_L1, Floor_M3, Floor_M4, Floor_M5, Floor_R1, Isle_BL, Isle_BM, Isle_BR, Floor_Shadow_b, Floor_IBL, Floor_IBR, BLackTile, Pool_BL, Pool_BM, Pool_BR, Waterfall, Fall_L, Stream_vert, Pool_Isle_BL, Pool_Isle_BM, Pool_Isle_BR,
-	
+	Floor_L1, Floor_M3, Floor_M4, Floor_M5, Floor_R1, Isle_BL, Isle_BM, Isle_BR, Floor_Shadow_b, Floor_IBL, Floor_IBR, BLackTile, Pool_BL, Pool_BM, Pool_BR, Waterfall, Fall_L, Stream_vert, Pool_Isle_BL, Pool_Isle_BM, Pool_Isle_BR,//62
+
 	//Row 4
-	Floor_L2, Floor_M6, Floor_M7, Floor_M8, Floor_End_t, Floor_End_l, Floor_End_r, OpenDoor, WoodDoor, MetalDoor, Stream_TL, Stream_TM, Stream_TR, Stream_BL, Stream_BM, Stream_BR, Wall1, Wall2, BlankTile2, BlankTile3,
-	
+	Floor_L2, Floor_M6, Floor_M7, Floor_M8, Floor_End_t, Floor_End_l, Floor_End_r, OpenDoor, WoodDoor, MetalDoor, Stream_TL, Stream_TM, Stream_TR, Stream_BL, Stream_BM, Stream_BR, Wall1, Wall2, BlankTile2, BlankTile3,//82
+
 	//Row 5
 	Floor_BL, Floor_BM, Floor_BM1, Floor_BM2, Floor_BR, Floor_End_b, Wall3, Floor_end, Gutter_open, Gutter_close, Gutter_Metal, Stream_end_t, Stream_end_b, Stream_end_l, Stream_end_r,	Pool_Isle_end_l, Pool_Isle_end_r, BlankTile4, Wall_end //101
 	};
@@ -116,6 +116,16 @@ class BackGround{
 	}
 	void buildMainMenu(){
 		cout << "building a menu here";
+		ifstream fin;
+		int type=5;
+		fin.open("../maps/MainMenu.txt");
+		for(int y=0;y<26;y++){
+			for(int x=0;x<26;x++){
+				fin >> type;
+				grid[x][y]=type;
+			}
+		}
+		fin.close();
 	}
 	//this is where the actual game map is put together
 	void buildMap(){
@@ -131,9 +141,20 @@ class BackGround{
 		fin.close();
 	}
 	//check where the camera is and only render tiles within the frame of the camera :D
-	void show(SDL_Renderer *ren,SDL_Rect &camera){
-		for(int x=0;x<MAPSIZE;x++){
-			for(int y=0;y<MAPSIZE;y++){
+	void show(SDL_Renderer *ren,SDL_Rect &camera,int toShow=0){
+		int xBound=0;
+		int yBound=0;
+
+		if (toShow==0) {
+			xBound = 26;
+			yBound = 26;
+		} else if (toShow==1) {
+			xBound = MAPSIZE;
+			yBound = MAPSIZE;
+		}
+
+		for(int x=0;x<xBound;x++){
+			for(int y=0;y<yBound;y++){
 					tiles[grid[x][y]]->show(ren,camera,(x*TILE_WIDTH),(y*TILE_HEIGHT));
 			}
 		}

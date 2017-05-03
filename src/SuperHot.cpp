@@ -31,6 +31,7 @@ string ToString(T val){
     return stream.str();
 }
 
+
 enum GAMESTATE {MainMenu,Playing,Paused,GameOver,Quit};
 enum Direction { NN,EE,SS,WW};
 
@@ -38,7 +39,6 @@ class myGame:public Game {
 	MediaManager texHandle; //use me to construct animationFrames (only one in the entire game)
 	SDL_Rect camera; 
 	GAMESTATE gameState;
-	 
 	TTF_Font *timeFont;
 	SDL_Color timeColor;
 	string currentTime;
@@ -147,7 +147,11 @@ class myGame:public Game {
 		//added the angle calculations in the player and enemy updates
 		setCamera(player);
 		player.update();
-		enemy.update();
+		if (trigger){
+			enemy.speed(player.x,player.y);
+			enemy.update();
+		}
+		else enemy.stop();
 	}
 
 	void handleEvent(SDL_Event &event){
@@ -216,29 +220,41 @@ class myGame:public Game {
 					enemy.speed(player.x,player.y);
 					trigger = true;
 				}
+				if(event.key.keysym.sym == SDLK_a){
+					player.dx = -5;
+					trigger = true;
+				}
+				if(event.key.keysym.sym == SDLK_s){
+					player.dy = 5;
+					trigger = true;
+				}
+				if(event.key.keysym.sym == SDLK_d){
+					player.dx = 5;
+					trigger = true;
+				}
 				break;
 			case SDL_KEYUP:
 				trigger = false;
 				if(event.key.keysym.sym == SDLK_w) {
 					player.dy = 0;
-					enemy.stop();
 				}
 				else if(event.key.keysym.sym == SDLK_a)	{
 					player.dx = 0;
-					enemy.stop();
 				}
 				else if(event.key.keysym.sym == SDLK_s) {
 					player.dy = 0;
-					enemy.stop();
 				}
 				else if(event.key.keysym.sym == SDLK_d)	{
 					player.dx = 0;
-					enemy.stop();
 				}
 				break;
 			case SDL_MOUSEBUTTONDOWN:
 				if (event.button.button == SDL_BUTTON_LEFT){
 				    Mix_PlayChannel(-1, music.gunshot, 0);
+					Bullet b(player.x, player.y);
+					//b.loadBullet(ren,texHandle);
+					b.showFrame(ren,camera,ticks);
+					trigger = true;
 					if (firing == 1){
 						player.frameID = firing;
 						firing += 1;
@@ -248,6 +264,9 @@ class myGame:public Game {
 						firing -= 1;
 					}
 				}
+				break;
+			case SDL_MOUSEBUTTONUP:
+				if (event.button.button == SDL_BUTTON_LEFT) trigger = false;
 				break;
 		}
 	}
@@ -278,6 +297,7 @@ class myGame:public Game {
 	}
 	void done(){
 		player.destroy();
+		enemy.destroy();
 		Game::done();
 	}
 };

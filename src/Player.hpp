@@ -55,6 +55,10 @@ class Player:public Sprite{
 	}
 
 	virtual void update(){
+		if(x<0)x=0;
+		if(y<0)y=0;
+		if(x>50*64-30)x=50*64-15;
+		if(y>50*64-24)y=50*64-24;
 		Sprite::update();
 	}
 
@@ -114,7 +118,7 @@ class Enemy:public Sprite{
 			dy = 0;
 	}
 	virtual void update(){
-		Sprite::update();
+		Sprite::update();		
 	}
 	void setRect(SDL_Rect &rect,int x,int y, int w, int h){
 		rect.x=x;

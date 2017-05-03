@@ -15,8 +15,8 @@ using namespace std;
 class AnimationFrame {
 	SDL_Texture *frame;
 	int time; // ms
-	SDL_Rect frameRect;
 	public:
+	SDL_Rect frameRect;
 	//Constructor to be used with Media Manager
 	AnimationFrame(SDL_Texture *newFrame,SDL_Rect spriteRect, int newTime=100){
 		if(newFrame!=NULL)

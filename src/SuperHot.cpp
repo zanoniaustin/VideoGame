@@ -35,9 +35,12 @@ enum GAMESTATE {MainMenu,Playing,Paused,GameOver,Quit};
 enum Direction { NN,EE,SS,WW};
 
 class myGame:public Game {
+	//important game handles
 	MediaManager texHandle; //use me to construct animationFrames (only one in the entire game)
+	bool trigger;
 	SDL_Rect camera;
 	GAMESTATE gameState;
+	//ttf stuff
 	TTF_Font *timeFont;
 	SDL_Color timeColor;
 	string currentTime;
@@ -45,27 +48,27 @@ class myGame:public Game {
 	SDL_Surface* titletexture;
 	SDL_Surface* messagetexture;
 	double triggerTime;
-
 	SDL_Rect triggerBox;
 	SDL_Rect titleBox;
 	SDL_Rect messageBox;
+	//sprites
 	Player player;
 	Enemy enemy;
 	BackGround bg; //bg doesnt move & needs to be placed X,Y
-	bool trigger;
 	int firing;
-	int button;
 	
+	//determines which tile a sprite is standing on returning x,y passed in
 	void isOnTile(Sprite *obj, int &x, int &y){
-		x=int((obj->x)/(TILE_WIDTH*4));
+		x=int((obj->x+8)/(TILE_WIDTH*4));
 		if(x<0)x=0;
 		if(x>50)x=50;
-		y=int((obj->y)/(TILE_HEIGHT*4));
+		y=int((obj->y+12)/(TILE_HEIGHT*4));
 		if(y<0)y=0;
 		if(y>50)y=50;
 	}
-		
-		void movePlayer(Direction dr){
+	
+	//moves the player checking bounds (sometimes is weird if running straight at a wall)	
+	void movePlayer(Direction dr){
 		//player bounds
 		static bool prevBounds[4] = {0,0,0,0};
 		player.dx=player.dy=0;
@@ -90,72 +93,72 @@ class myGame:public Game {
 		switch(dr){
 			case NN:
 			if(t.isTopBound()){
-				if(pTop>tTop+36&&prevBounds[dr]==false)player.dy=-3;
+				if(pTop>tTop+28 && prevBounds[dr]==false)player.dy=-2;
 				else{
 					cout << "topBounded!"<<endl;
 					prevBounds[dr]=true;
-					player.y=pTop+10;
+					//player.y=pTop+10;
 					player.dy=0;
 				}
 			}
 			else{
 				prevBounds[dr]=false;
-				player.dy=-3;
+				player.dy=-2;
 			}
 			break;
 			case EE:
 			if(t.isRightBound()){
-				if(pRight<tRight-36&&prevBounds[dr]==false)player.dx=3;
+				if(pRight<tRight-28&&prevBounds[dr]==false)player.dx=2;
 				else{
 					cout << "rightBounded!"<<endl;
 					prevBounds[dr]=true;
-					player.x=tRight-player.w()-10;
+					//player.x=tRight-player.w()-10;
 					player.dx=0;
 				}
 			}
 			else{
 				prevBounds[dr]=false;
-				player.dx=5;
+				player.dx=2;
 			}
 			break;
 			case SS:
 			if(t.isBotBound()){
-				if(pBot<tBot-36&&prevBounds[dr]==false)player.dy=3;
+				if(pBot<tBot-28&&prevBounds[dr]==false)player.dy=2;
 				else{
 					cout << "botBounded!"<<endl;
 					prevBounds[dr]=true;
-					player.y=tBot-player.h()-20;
+					//player.y=tBot-player.h()-10;
 					player.dy=0;
 				}
 			}
 			else{
 				prevBounds[dr]=false;
-				player.dy=3;
+				player.dy=2;
 			}
 			break;
 			case WW:
 			if(t.isLeftBound()){
-				if(pLeft>tLeft+36&&prevBounds[dr]==false)player.dx=-3;
+				if(pLeft>tLeft+28&&prevBounds[dr]==false)player.dx=-2;
 				else{
 					cout << "leftBounded!"<<endl;
 					prevBounds[dr]=true;
-					player.x=tLeft+20;
+					//player.x=tLeft+10;
 					player.dx=0;
 					
 				}
 			}
 			else{
 				prevBounds[dr]=false;
-				player.dx=-3;
+				player.dx=-2;
 			}
 			break;
 		}
 	}
+	
 	public:
 	void init(const char *gameName = "Super Hot", int maxW=640, int maxH=480, int startX=0, int startY=0) {
 		Game::init(gameName,SCREEN_HEIGHT,SCREEN_WIDTH);
 		trigger = false;
-		button = 0;
 		triggerTime=0;
 		timeFont = TTF_OpenFont( "../assets/8bit.TTF", 28 );
 		timeColor={0,0,0};
@@ -174,8 +177,10 @@ class myGame:public Game {
 		SDL_Texture *set = texHandle.load(ren,"../assets/DungeonTiles.bmp");
 		bg.createTileSet(set);
 		bg.buildMainMenu();
-		titletexture = TTF_RenderText_Solid(timeFont,"Super Hot",timeColor);
-		messagetexture = TTF_RenderText_Solid(timeFont,"Press 'P' to play ... ",timeColor);
+		string fontText = "Super Hot";
+		titletexture = TTF_RenderText_Solid(timeFont,fontText.c_str(),timeColor);
+		fontText="Press 'p' to Play ...";
+		messagetexture = TTF_RenderText_Solid(timeFont,fontText.c_str(),timeColor);
 	}
 	void loadBackground(){
 		SDL_Texture *set = texHandle.load(ren,"../assets/DungeonTiles.bmp");
@@ -183,25 +188,27 @@ class myGame:public Game {
 		bg.buildMap();//put the map together
 	}
 
-	//Show method now passes camera, allows rendering of tiles within only the camera (saves fps and can center)
 	void show(int ticks){
 		bg.show(ren,camera,gameState);
 		if(gameState==Playing){
+			//counter for the time
+			if(trigger){
+				triggerTime +=.1;
+				triggerTime<100? setRect(triggerBox,0,0,64,60) :setRect(triggerBox,0,0,(floor(log(triggerTime)*16)),60);
+				currentTime = ToString(triggerTime);
+			}
+			timetexture = TTF_RenderText_Solid(timeFont,currentTime.c_str(),timeColor);
+			//render time
+			SDL_RenderCopy(ren,SDL_CreateTextureFromSurface(ren,timetexture),NULL,&triggerBox);
+			
 			player.showFrame(ren,camera,ticks);
-			enemy.showFrame(ren,camera,ticks);
+			//enemy.showFrame(ren,camera,ticks);
 		} 
 		else if (gameState==MainMenu) {
 			SDL_RenderCopy(ren,SDL_CreateTextureFromSurface(ren,titletexture),NULL,&titleBox);
 			SDL_RenderCopy(ren,SDL_CreateTextureFromSurface(ren,messagetexture),NULL,&messageBox);
 		}
-		if(trigger){
-			triggerTime +=.1;
 
-			triggerTime<100? setRect(triggerBox,0,0,64,60) :setRect(triggerBox,0,0,(floor(log(triggerTime)*16)),60);
-			currentTime = ToString(triggerTime);
-		}
-		timetexture = TTF_RenderText_Solid(timeFont,currentTime.c_str(),timeColor);
-		SDL_RenderCopy(ren,SDL_CreateTextureFromSurface(ren,timetexture),NULL,&triggerBox);
 	}
 
 	void update(float dt){
@@ -215,61 +222,44 @@ class myGame:public Game {
 	}
 
 	void handleEvent(SDL_Event &event){
-    player.handleMyEvent(event);
+		player.handleMyEvent(event);
 
-    //angle calculation testing here
-		float a,b;
-		a = player.x - camera.x - event.motion.x;
-		b = player.y - camera.y- event.motion.y;
+		//angle calculation testing here
+		static int mX = event.motion.x;
+		static int mY = event.motion.y;
+		if(event.type==SDL_MOUSEMOTION){
+			mX = event.motion.x;
+			mY = event.motion.y;
+		}
+		static float a,b;
+		a = player.x - camera.x - mX;
+		b = player.y - camera.y- mY;
 		player.angle = atan2(b,a) * 180 / M_PI - 180;
 		a=player.x-enemy.x;
 		b=player.y-enemy.y;
 		enemy.angle = atan2(b,a)*180 / M_PI;
-
-    int tilePosX,tilePosY;
-		isOnTile(&player,tilePosX,tilePosY);
-		if(tilePosX<0)tilePosX=0;
-		if(tilePosY<0)tilePosY=0;
-		if(tilePosX>50)tilePosX=50;
-		if(tilePosY>50)tilePosY=50;
 
     if(gameState==Playing){
       switch(event.type){
   			case SDL_KEYDOWN:
   				if(event.key.keysym.sym == SDLK_w){
 					movePlayer(NN);
-  					//player.dy = -5;
   					enemy.speed(player.x,player.y);
   					trigger = true;
   				}
   				if(event.key.keysym.sym == SDLK_a){
 					movePlayer(WW);
-  					//player.dx = -5;
   					enemy.speed(player.x,player.y);
   					trigger = true;
   				}
   				if(event.key.keysym.sym == SDLK_s){
 					movePlayer(SS);
-  					//player.dy = 5;
   					enemy.speed(player.x,player.y);
   					trigger = true;
   				}
   				if(event.key.keysym.sym == SDLK_d){
 					movePlayer(EE);
-					//player.dx = 5;
   					enemy.speed(player.x,player.y);
-  					trigger = true;
-  				}
-  				if(event.key.keysym.sym == SDLK_a){
-  					player.dx = -5;
-  					trigger = true;
-  				}
-  				if(event.key.keysym.sym == SDLK_s){
-  					player.dy = 5;
-  					trigger = true;
-  				}
-  				if(event.key.keysym.sym == SDLK_d){
-  					player.dx = 5;
   					trigger = true;
   				}
   				break;

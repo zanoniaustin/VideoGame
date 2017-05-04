@@ -37,6 +37,7 @@ enum TileType {
 	Floor_BL, Floor_BM, Floor_BM1, Floor_BM2, Floor_BR, Floor_End_b, Wall3, Floor_end, Gutter_open, Gutter_close, Gutter_Metal, Stream_end_t, Stream_end_b, Stream_end_l, Stream_end_r,	Pool_Isle_end_l, Pool_Isle_end_r, BlankTile4, Wall_end //101
 	};
 
+//used to check tile collision with camera, this is important to only render tiles in camera space
 bool isCollided(SDL_Rect r1, SDL_Rect r2){
 	//set bounds
 	int left1 = r1.x;
@@ -58,7 +59,6 @@ bool isCollided(SDL_Rect r1, SDL_Rect r2){
 
 
 
-//given so no time is needed.
 class Tile{
 	SDL_Texture *frame; //what it is
 	SDL_Rect frameRect; //where it is
@@ -97,6 +97,12 @@ class Tile{
 			SDL_RenderCopy(ren,frame,&frameRect,&destRect);
 		}
 	}
+	int x(){
+		return frameRect.x*4;
+	}
+	int y(){
+		return frameRect.y*4;
+	}
 	int w(){
 		return frameRect.w*4;
 	}
@@ -125,14 +131,20 @@ class Tile{
 
 class BackGround{
 	map<int,Tile *> tiles; //texture for each tile in a neat little map
+	
 	int grid[MAPSIZE][MAPSIZE]; //actually the map (storing tiletype in a 2d array)
-	//used to load the tile type to the map (needed so a map can be built with these)
-
+	
+	//function to initialize the 2d array so it doesnt crash
+	void initMap(){
+		for(int y=0;y<MAPSIZE;y++)
+			for(int x=0;x<MAPSIZE;x++)
+				grid[x][y]=1;
+	}
+	
 	//this function turns the correct edges to collide
 	void setWalls(){
 		//given in top, right, bot , left (clockwise motion)
 		//true means that side is a collision
-		//false means you are free to pass
 		for(int i=0; i<Wall_end;i++)tiles[i]->setBounds(false,false,false,false);
 		tiles[Floor_TL]->setBounds(true,false,false,true);
 		tiles[Floor_TM]->setBounds(true,false,false,false);
@@ -168,15 +180,19 @@ class BackGround{
 	}
 
 	public:
+	//add this type to the map of types
 	void addtile(int type,Tile *t){
 		if(tiles.count(type)==0){
-			//cout << "adding tile: "<< type<<endl;
 			tiles[type]=t;
 		}
 	}
+	
+	//returns the tile on that position
 	Tile posTile(int x, int y){
 		return *tiles[grid[x][y]];
 	}
+	
+	//load the spritesheet
 	void createTileSet(SDL_Texture *set){
 		SDL_Rect tileRect;
 		int xVal=0;
@@ -193,21 +209,25 @@ class BackGround{
 			this->addtile(i,new Tile(set,tileRect));
 			xVal++;
 		}
+		initMap();
 		setWalls();
 	}
+
 	void buildMainMenu(){
 		cout << "building a menu here";
 		ifstream fin;
 		int type=5;
 		fin.open("../maps/MainMenu.txt");
-		for(int y=0;y<26;y++){
-			for(int x=0;x<26;x++){
+		for(int y=0;y<12;y++){//12 is about the height of the screen
+			for(int x=0;x<20;x++){//20 is about the width of the screen
 				fin >> type;
 				grid[x][y]=type;
 			}
 		}
 		fin.close();
+		cout << "done"<<endl;
 	}
+	
 	//this is where the actual game map is put together
 	void buildMap(){
 		ifstream fin;
@@ -227,8 +247,8 @@ class BackGround{
 		int yBound=0;
 
 		if (toShow==0) {
-			xBound = 26;
-			yBound = 26;
+			xBound = 20;
+			yBound = 12;
 		} else if (toShow==1) {
 			xBound = MAPSIZE;
 			yBound = MAPSIZE;
@@ -240,6 +260,11 @@ class BackGround{
 			}
 		}
 	}
-
+	
+	void destroy(){
+		for(int i=0;i<TileType::Wall_end;i++){
+			tiles[i]->destroy();
+		}
+	}
 };
 #endif

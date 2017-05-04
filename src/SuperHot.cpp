@@ -42,61 +42,115 @@ class myGame:public Game {
 	SDL_Color timeColor;
 	string currentTime;
 	SDL_Surface* timetexture;
-  SDL_Surface* titletexture;
-  SDL_Surface* messagetexture;
+	SDL_Surface* titletexture;
+	SDL_Surface* messagetexture;
 	double triggerTime;
 
 	SDL_Rect triggerBox;
-  SDL_Rect titleBox;
-  SDL_Rect messageBox;
+	SDL_Rect titleBox;
+	SDL_Rect messageBox;
 	Player player;
 	Enemy enemy;
 	BackGround bg; //bg doesnt move & needs to be placed X,Y
 	bool trigger;
 	int firing;
 	int button;
-
-	bool isCollidedOnBound(Tile t, Sprite *obj,Direction dr){
-		//set bounds
-		int tileX,tileY;
-		isOnTile(obj,tileX,tileY);
-		int tLeft = tileX;
-		int oLeft = obj->x;
-		int tRight = tileX+t.w();
-		int oRight= obj->x+obj->w();
-		int tTop = tileY;
-		int oTop = obj->y;
-		int tBot = tileY+t.h();
-		int oBot = obj->y+obj->h();
-		//cout << "bounds: N:"<<t.isTopBound()<<" E:"<<t.isRightBound() <<" S:"<<t.isBotBound()<< " W:"<<t.isRightBound()<<endl;
-		//test if r1 is outside r2 (return false if it is on any axis)
-		if(oBot<=tBot && t.isBotBound() && dr==SS){
-			//cout << "botBound here!"<<endl;
-			return true;
-		}
-		if(oTop<=tTop && t.isTopBound() &&dr==NN){
-			//cout << "topBound here!"<<endl;
-			return true;
-		}
-		if(oLeft<=tLeft && t.isLeftBound() && dr==WW) {
-			//cout << "leftBound here!" <<endl;
-			return true;
-		}
-		if(oRight>=tRight && t.isRightBound() && dr==EE) {
-			//cout << "rightBound here!" << endl;
-			return true;
-		}
-		//if(tBot<=rTop && !t.isBotBound())return false;
-		//if(tTop>=rBot && !t.isTopBound())return false;
-		//if(tRight<=rLeft && !t.isRightBound())return false;
-		//if(tLeft>=rRight && !t.isLeftBound())return false;
-		return false;
-	}
+	
 	void isOnTile(Sprite *obj, int &x, int &y){
-		x=floor((obj->x - 8)/(TILE_WIDTH*4));
-		y=floor((obj->y - 12)/(TILE_HEIGHT*4));
+		x=int((obj->x)/(TILE_WIDTH*4));
+		if(x<0)x=0;
+		if(x>50)x=50;
+		y=int((obj->y)/(TILE_HEIGHT*4));
+		if(y<0)y=0;
+		if(y>50)y=50;
 	}
+		
+		void movePlayer(Direction dr){
+		//player bounds
+		static bool prevBounds[4] = {0,0,0,0};
+		player.dx=player.dy=0;
+		int pTop=player.y;
+		int pRight=player.x+player.w();
+		int pBot=player.y+player.h();
+		int pLeft=player.x;
+		cout << "Player Top: "<< pTop << " Right: "<< pRight << " Bot: "<< pBot<< " Left: "<< pLeft<<endl;
+		//tile & position
+		int tX=0, tY=0;
+		isOnTile(&player,tX,tY);
+		Tile t = bg.posTile(tX,tY);
+		//cout << '('<<tX<<','<<tY<<") Bounds(N"<<t.isTopBound()<<" ,E"<<t.isRightBound()<<" ,S"<<t.isBotBound()<< " ,W"<<t.isLeftBound()<<')'<<endl;
+		//tile bounds
+		int tTop = tY*t.h();
+		int tRight = tX*t.w() +t.w();
+		int tBot = tY*t.h() +t.h();
+		int tLeft =tX*t.w();
+		cout << "Tile Top: "<< tTop << " Right: "<< tRight << " Bot: "<< tBot<< " Left: "<< tLeft<<endl;
 
+		
+		switch(dr){
+			case NN:
+			if(t.isTopBound()){
+				if(pTop>tTop+36&&prevBounds[dr]==false)player.dy=-3;
+				else{
+					cout << "topBounded!"<<endl;
+					prevBounds[dr]=true;
+					player.y=pTop+10;
+					player.dy=0;
+				}
+			}
+			else{
+				prevBounds[dr]=false;
+				player.dy=-3;
+			}
+			break;
+			case EE:
+			if(t.isRightBound()){
+				if(pRight<tRight-36&&prevBounds[dr]==false)player.dx=3;
+				else{
+					cout << "rightBounded!"<<endl;
+					prevBounds[dr]=true;
+					player.x=tRight-player.w()-10;
+					player.dx=0;
+				}
+			}
+			else{
+				prevBounds[dr]=false;
+				player.dx=5;
+			}
+			break;
+			case SS:
+			if(t.isBotBound()){
+				if(pBot<tBot-36&&prevBounds[dr]==false)player.dy=3;
+				else{
+					cout << "botBounded!"<<endl;
+					prevBounds[dr]=true;
+					player.y=tBot-player.h()-20;
+					player.dy=0;
+				}
+			}
+			else{
+				prevBounds[dr]=false;
+				player.dy=3;
+			}
+			break;
+			case WW:
+			if(t.isLeftBound()){
+				if(pLeft>tLeft+36&&prevBounds[dr]==false)player.dx=-3;
+				else{
+					cout << "leftBounded!"<<endl;
+					prevBounds[dr]=true;
+					player.x=tLeft+20;
+					player.dx=0;
+					
+				}
+			}
+			else{
+				prevBounds[dr]=false;
+				player.dx=-3;
+			}
+			break;
+		}
+	}
 	public:
 	void init(const char *gameName = "Super Hot", int maxW=640, int maxH=480, int startX=0, int startY=0) {
 		Game::init(gameName,SCREEN_HEIGHT,SCREEN_WIDTH);
@@ -107,21 +161,21 @@ class myGame:public Game {
 		timeColor={0,0,0};
 		firing = 1;
 		setRect(triggerBox,0,0,100,80);
-    setRect(titleBox,350,100,600,200);
-    setRect(messageBox,300,350,800,100);
+		setRect(titleBox,350,100,600,200);
+		setRect(messageBox,300,350,800,100);
 
 		setRect(camera,0,0,SCREEN_WIDTH,SCREEN_HEIGHT);
 
 		gameState=MainMenu;
 		createMenu();
-    Mix_PlayMusic(music.music, -1);
+		Mix_PlayMusic(music.music, -1);
 	}
 	void createMenu(){
 		SDL_Texture *set = texHandle.load(ren,"../assets/DungeonTiles.bmp");
 		bg.createTileSet(set);
 		bg.buildMainMenu();
-    titletexture = TTF_RenderText_Solid(timeFont,"Super Hot",timeColor);
-    messagetexture = TTF_RenderText_Solid(timeFont,"Press 'P' to play ... ",timeColor);
+		titletexture = TTF_RenderText_Solid(timeFont,"Super Hot",timeColor);
+		messagetexture = TTF_RenderText_Solid(timeFont,"Press 'P' to play ... ",timeColor);
 	}
 	void loadBackground(){
 		SDL_Texture *set = texHandle.load(ren,"../assets/DungeonTiles.bmp");
@@ -132,14 +186,14 @@ class myGame:public Game {
 	//Show method now passes camera, allows rendering of tiles within only the camera (saves fps and can center)
 	void show(int ticks){
 		bg.show(ren,camera,gameState);
-    if(gameState==Playing){
-      player.showFrame(ren,camera,ticks);
-  		enemy.showFrame(ren,camera,ticks);
-    } else if (gameState==MainMenu) {
-      SDL_RenderCopy(ren,SDL_CreateTextureFromSurface(ren,titletexture),NULL,&titleBox);
-      SDL_RenderCopy(ren,SDL_CreateTextureFromSurface(ren,messagetexture),NULL,&messageBox);
-    }
-
+		if(gameState==Playing){
+			player.showFrame(ren,camera,ticks);
+			enemy.showFrame(ren,camera,ticks);
+		} 
+		else if (gameState==MainMenu) {
+			SDL_RenderCopy(ren,SDL_CreateTextureFromSurface(ren,titletexture),NULL,&titleBox);
+			SDL_RenderCopy(ren,SDL_CreateTextureFromSurface(ren,messagetexture),NULL,&messageBox);
+		}
 		if(trigger){
 			triggerTime +=.1;
 
@@ -183,48 +237,26 @@ class myGame:public Game {
       switch(event.type){
   			case SDL_KEYDOWN:
   				if(event.key.keysym.sym == SDLK_w){
-  					if(player.y>=0){
-  						if(!isCollidedOnBound(bg.posTile(tilePosX,tilePosY),&player,NN))player.dy = -5;
-  						else player.dy=0;
-  					}
-  					else{
-  						player.y=0;
-  						 player.dy=0;
-  					 }
+					movePlayer(NN);
   					//player.dy = -5;
   					enemy.speed(player.x,player.y);
   					trigger = true;
   				}
   				if(event.key.keysym.sym == SDLK_a){
-  					if(player.x>=0){
-  						if(!isCollidedOnBound(bg.posTile(tilePosX,tilePosY),&player,WW))player.dx = -5;
-  						else player.dx=0;
-  					}
-  					else{
-  						player.x=0;
-  						 player.dx=0;
-  					 }
+					movePlayer(WW);
   					//player.dx = -5;
   					enemy.speed(player.x,player.y);
   					trigger = true;
   				}
   				if(event.key.keysym.sym == SDLK_s){
-  					if(player.y<(50*64)-24){
-  						if(!isCollidedOnBound(bg.posTile(tilePosX,tilePosY),&player,SS))player.dy = 5;
-  						else player.dy=0;
-  					}
-  					else player.dy=0;
+					movePlayer(SS);
   					//player.dy = 5;
   					enemy.speed(player.x,player.y);
   					trigger = true;
   				}
   				if(event.key.keysym.sym == SDLK_d){
-  					if(player.x<(50*64)-4){
-  						if(!isCollidedOnBound(bg.posTile(tilePosX,tilePosY),&player,EE))player.dx = 5;
-  						else player.dx=0;
-  					}
-  					else player.dx=0;
-  					//player.dx = 5;
+					movePlayer(EE);
+					//player.dx = 5;
   					enemy.speed(player.x,player.y);
   					trigger = true;
   				}
@@ -259,9 +291,9 @@ class myGame:public Game {
   			case SDL_MOUSEBUTTONDOWN:
   				if (event.button.button == SDL_BUTTON_LEFT){
   				  Mix_PlayChannel(-1, music.gunshot, 0);
-  					Bullet b(player.x, player.y);
+  					//Bullet b(player.x, player.y);
   					//b.loadBullet(ren,texHandle);
-  					b.showFrame(ren,camera,ticks);
+  					//b.showFrame(ren,camera,ticks);
   					trigger = true;
   					if (firing == 1){
   						player.frameID = firing;
@@ -282,10 +314,10 @@ class myGame:public Game {
       switch(event.type){
   			case SDL_KEYDOWN:
   				if(event.key.keysym.sym == SDLK_p){
-            player.loadPlayer(ren,texHandle);
-        		enemy.loadEnemy(ren,texHandle);
-        		loadBackground();
-            gameState=Playing;
+					player.loadPlayer(ren,texHandle);
+					enemy.loadEnemy(ren,texHandle);
+					loadBackground();
+					gameState=Playing;
   				}
       }
     }
@@ -318,6 +350,10 @@ class myGame:public Game {
 	void done(){
 		player.destroy();
 		enemy.destroy();
+		SDL_FreeSurface(timetexture);
+		SDL_FreeSurface(titletexture);
+		SDL_FreeSurface(messagetexture);
+		bg.destroy();
 		Game::done();
 	}
 };

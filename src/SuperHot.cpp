@@ -54,6 +54,9 @@ class myGame:public Game {
 	//sprites
 	Player player;
 	Enemy enemy;
+	Bullet bullet[100];
+	int shot;
+	int bullets;
 	BackGround bg; //bg doesnt move & needs to be placed X,Y
 	int firing;
 	
@@ -163,6 +166,8 @@ class myGame:public Game {
 		timeFont = TTF_OpenFont( "../assets/8bit.TTF", 28 );
 		timeColor={0,0,0};
 		firing = 1;
+		shot = 0;
+		bullets = 0;
 		setRect(triggerBox,0,0,100,80);
 		setRect(titleBox,350,100,600,200);
 		setRect(messageBox,300,350,800,100);
@@ -200,9 +205,11 @@ class myGame:public Game {
 			timetexture = TTF_RenderText_Solid(timeFont,currentTime.c_str(),timeColor);
 			//render time
 			SDL_RenderCopy(ren,SDL_CreateTextureFromSurface(ren,timetexture),NULL,&triggerBox);
-			
 			player.showFrame(ren,camera,ticks);
-			//enemy.showFrame(ren,camera,ticks);
+			enemy.showFrame(ren,camera,ticks);
+			if(shot == 1)
+				for(int i = 0; i < bullets; i++)
+					bullet[i].showFrame(ren,camera,ticks);
 		} 
 		else if (gameState==MainMenu) {
 			SDL_RenderCopy(ren,SDL_CreateTextureFromSurface(ren,titletexture),NULL,&titleBox);
@@ -219,6 +226,9 @@ class myGame:public Game {
 			enemy.update();
 		}
 		else enemy.stop();
+		if(shot == 1)
+			for(int i = 0; i < bullets; i++)
+				bullet[i].update();
 	}
 
 	void handleEvent(SDL_Event &event){
@@ -280,10 +290,12 @@ class myGame:public Game {
   				break;
   			case SDL_MOUSEBUTTONDOWN:
   				if (event.button.button == SDL_BUTTON_LEFT){
-  				  Mix_PlayChannel(-1, music.gunshot, 0);
-  					//Bullet b(player.x, player.y);
-  					//b.loadBullet(ren,texHandle);
-  					//b.showFrame(ren,camera,ticks);
+					Mix_PlayChannel(-1, music.gunshot, 0);
+  					shot = 1;
+					bullet[bullets].setAngle(player.angle-90);
+					bullet[bullets].setxy(player.x + 15,player.y + 15);
+					bullet[bullets].loadBullet(ren,texHandle);
+					bullets++;
   					trigger = true;
   					if (firing == 1){
   						player.frameID = firing;

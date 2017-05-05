@@ -132,27 +132,27 @@ class Enemy:public Sprite{
 };
 
 class Bullet:public Sprite{
-	int x,y;
 	int frameID;
 	public:
-	int dx,dy;
+	//float angle;
 	Bullet(){
 		x = 0;
 		y = 0;
 		dx = 0;
 		dy = 0;
+		angle = 0;
 		frameID = 0;
 	}
 	Bullet(int x, int y){
 		this->x = x;
 		this->y = y;
 		dx = 0;
-		dy = 3;
+		dy = 0;
+		angle = 0;
 		frameID = 0;
 	}
 	
-	void loadBullet(SDL_Renderer *ren,MediaManager &texHandle, int frameID){
-		this->frameID = frameID;
+	void loadBullet(SDL_Renderer *ren,MediaManager &texHandle){
 		SDL_Rect frameRect; //used to create sprite frames (x,y,w,h)
 		setRect(frameRect,0,0,3,6);
 		this->addFrame(new AnimationFrame(texHandle.load(ren,"../assets/bullet.bmp"),frameRect,300));
@@ -162,9 +162,19 @@ class Bullet:public Sprite{
 		frames[frameID]->show(ren,camera,angle,x,y);
 	}
 	
-	void shoot(){
-		x += dx;
-		y += dy;
+	void setxy(int x, int y){
+		this->x = x;
+		this->y = y;
+		dy = cos(angle);
+		dx = sin(angle);
+	}
+	
+	virtual void update(){
+		Sprite::update();
+	}
+	
+	void setAngle(float angle){
+		this->angle = angle;
 	}
 	
 	void setRect(SDL_Rect &rect,int x,int y, int w, int h){
@@ -178,5 +188,4 @@ class Bullet:public Sprite{
 		Sprite::destroy();
 	}
 };
-
 #endif
